@@ -1,12 +1,69 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import jwt_decode from "jwt-decode";
+import { Link, useNavigate } from "react-router-dom";
+import { useExamContext } from './context/ExamContext';
 
-const LoginForm = ({ onLogin }) => {
+const LoginForm = () => {
+  const navigate = useNavigate();
+  const { login } = useExamContext();
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: ''
+    email: "",
+    password: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // ✅ Google login callback
+  const handleCallbackResponse = async (response) => {
+    try {
+      const userObject = jwt_decode(response.credential);
+      console.log("Google User:", userObject);
+
+      // Send Google user data to backend
+      const apiResponse = await fetch('http://localhost:5000/api/auth/google/success', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          googleId: userObject.sub,
+          name: userObject.name,
+          email: userObject.email,
+          avatar: userObject.picture
+        }),
+      });
+
+      const data = await apiResponse.json();
+
+      if (!apiResponse.ok) {
+        throw new Error(data.message || 'Google login failed');
+      }
+
+      // Use context to login
+      login(data.user, data.token);
+      navigate('/home');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // ✅ Load Google Sign-In on mount
+  useEffect(() => {
+    /* global google */
+    if (window.google) {
+      google.accounts.id.initialize({
+        client_id: "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com", // ✅ Your real client ID
+        callback: handleCallbackResponse,
+      });
+
+      google.accounts.id.renderButton(document.getElementById("googleSignInDiv"), {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+      });
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,67 +73,95 @@ const LoginForm = ({ onLogin }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Manual form login
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    if (onLogin) onLogin();
+    setError("");
+    setLoading(true);
+
+    if (!formData.email || !formData.password) {
+      setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Use context to login
+      login(data.user, data.token);
+      navigate('/home');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#1658a0] flex items-center justify-center">
-      <div className="bg-white w-full max-w-xl rounded-lg shadow-lg p-8">
-        <h2 className="text-blue-800 font-semibold text-sm uppercase mb-6">Login</h2>
-        
+    <div className="min-h-screen bg-blue-800 flex items-center justify-center">
+      <div className="bg-gray-100 p-8 rounded-md shadow-md w-[90%] max-w-2xl">
+        <h2 className="text-blue-800 font-bold text-sm mb-6">LOGIN</h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex gap-4">
-            <div className="w-1/2 border-b border-gray-300">
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="First Name"
-                required
-                className="w-full px-1 py-2 text-sm bg-transparent focus:outline-none"
-              />
-            </div>
-            <div className="w-1/2 border-b border-gray-300">
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Last Name"
-                required
-                className="w-full px-1 py-2 text-sm bg-transparent focus:outline-none"
-              />
-            </div>
-          </div>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            className="w-full border-b border-gray-300 bg-transparent focus:outline-none"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="border-b border-gray-300">
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email"
-              required
-              className="w-full px-1 py-2 text-sm bg-transparent focus:outline-none"
-            />
-          </div>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="w-full border-b border-gray-300 bg-transparent focus:outline-none"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="text-sm">
-            <span className="text-gray-700">• Don’t have an account </span>
-            <Link to="/register" className=" hover:underline">Register</Link>
+          <div className="text-sm text-gray-600">
+            • Don't have an account{" "}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              Register
+            </Link>
           </div>
 
           <button
             type="submit"
-            className="w-28 bg-[#1658a0] text-white py-2 px-4 rounded-full font-medium hover:bg-blue-900 transition"
+            disabled={loading}
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <div className="mb-2 text-gray-500">OR</div>
+          <div id="googleSignInDiv" className="flex justify-center" />
+        </div>
       </div>
     </div>
   );

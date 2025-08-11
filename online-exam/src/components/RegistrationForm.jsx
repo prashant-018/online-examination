@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useExamContext } from './context/ExamContext';
 
-const RegistrationForm = ({ role, onRegister }) => {
+const RegistrationForm = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useExamContext();
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    faculty: '',
-    email: ''
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: location.state?.role || 'Student'
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,10 +25,47 @@ const RegistrationForm = ({ role, onRegister }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ role, ...formData });
-    if (onRegister) onRegister();
+    setError('');
+    setLoading(true);
+
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Use context to login
+      login(data.user, data.token);
+      navigate('/home');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,41 +73,23 @@ const RegistrationForm = ({ role, onRegister }) => {
       <div className="bg-white rounded-md shadow-md p-8 w-full max-w-2xl">
         <h2 className="text-sm font-bold text-[#1658a0] tracking-wider mb-6">REGISTRATION</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input
-              type="text"
-              name="firstName"
-              placeholder="First Name"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-              className="border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
-            />
-            <input
-              type="text"
-              name="lastName"
-              placeholder="Last Name"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-              className="border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
-            />
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
           </div>
+        )}
 
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <select
-              name="faculty"
-              value={formData.faculty}
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
               onChange={handleChange}
               required
-              className="w-full border-b border-gray-300 py-2 px-1 bg-white focus:outline-none focus:border-[#1658a0]"
-            >
-              <option value="">Faculty</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Science">Science</option>
-              <option value="Arts">Arts</option>
-            </select>
+              className="w-full border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
+            />
           </div>
 
           <div className="mb-4">
@@ -71,6 +98,44 @@ const RegistrationForm = ({ role, onRegister }) => {
               name="email"
               placeholder="Email"
               value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
+            />
+          </div>
+
+          <div className="mb-4">
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+              className="w-full border-b border-gray-300 py-2 px-1 bg-white focus:outline-none focus:border-[#1658a0]"
+            >
+              <option value="Student">Student</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
+            />
+          </div>
+
+          <div className="mb-6">
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
               onChange={handleChange}
               required
               className="w-full border-b border-gray-300 py-2 px-1 focus:outline-none focus:border-[#1658a0]"
@@ -86,9 +151,10 @@ const RegistrationForm = ({ role, onRegister }) => {
 
           <button
             type="submit"
-            className="bg-[#1658a0] text-white font-medium py-2 px-6 rounded-full hover:bg-[#124b8a] transition"
+            disabled={loading}
+            className="bg-[#1658a0] text-white font-medium py-2 px-6 rounded-full hover:bg-[#124b8a] transition disabled:opacity-50 disabled:cursor-not-allowed w-full"
           >
-            Register
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
       </div>

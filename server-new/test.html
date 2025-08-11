@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Server Connection Test</h1>
+
+  <div class="test-section">
+    <h2>Health Check</h2>
+    <button onclick="testHealth()">Test Server Health</button>
+    <div id="healthResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Registration Test</h2>
+    <button onclick="testRegister()">Test Registration</button>
+    <div id="registerResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Login Test</h2>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Google OAuth Test</h2>
+    <button onclick="testGoogleAuth()">Test Google Auth</button>
+    <div id="googleResult" class="result"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+
+    async function testHealth() {
+      const resultDiv = document.getElementById('healthResult');
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        resultDiv.innerHTML = `✅ Success: ${JSON.stringify(data, null, 2)}`;
+        resultDiv.className = 'result success';
+      } catch (error) {
+        resultDiv.innerHTML = `❌ Error: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    async function testRegister() {
+      const resultDiv = document.getElementById('registerResult');
+      try {
+        const response = await fetch(`${API_BASE}/users/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Test User',
+            email: 'test@example.com',
+            password: 'password123',
+            role: 'Student'
+          })
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `✅ Success: ${JSON.stringify(data, null, 2)}`;
+        resultDiv.className = 'result success';
+      } catch (error) {
+        resultDiv.innerHTML = `❌ Error: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    async function testLogin() {
+      const resultDiv = document.getElementById('loginResult');
+      try {
+        const response = await fetch(`${API_BASE}/users/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: 'test@example.com',
+            password: 'password123'
+          })
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `✅ Success: ${JSON.stringify(data, null, 2)}`;
+        resultDiv.className = 'result success';
+      } catch (error) {
+        resultDiv.innerHTML = `❌ Error: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    async function testGoogleAuth() {
+      const resultDiv = document.getElementById('googleResult');
+      try {
+        const response = await fetch(`${API_BASE}/auth/google/success`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            googleId: 'mock-google-id',
+            name: 'Google Test User',
+            email: 'google@example.com',
+            avatar: 'https://example.com/avatar.jpg'
+          })
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `✅ Success: ${JSON.stringify(data, null, 2)}`;
+        resultDiv.className = 'result success';
+      } catch (error) {
+        resultDiv.innerHTML = `❌ Error: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    // Auto-test on page load
+    window.onload = function () {
+      setTimeout(testHealth, 1000);
+    };
+  </script>
+</body>
+
+</html>

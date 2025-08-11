@@ -1,6 +1,37 @@
 {
+  "name": "online-examination-system",
+  "version": "1.0.0",
+  "description": "Complete online examination system with React frontend and Node.js backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd server-new && npm start",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd server-new && npm run dev",
+    "dev:frontend": "cd online-exam && npm run dev",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd online-exam && npm run build",
+    "install:all": "npm install && cd server-new && npm install && cd ../online-exam && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "nodejs",
+    "express",
+    "mongodb",
+    "online-exam",
+    "fullstack"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.8",
-    "tailwindcss": "^4.1.8"
+    "express-rate-limit": "^8.0.1",
+    "helmet": "^8.1.0"
   }
 }

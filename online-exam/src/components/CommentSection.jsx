@@ -1,21 +1,23 @@
 import React from 'react';
 
+const BASE = import.meta.env.BASE_URL;
+
 const comments = [
   {
     name: "CRISTINA JENSON",
-    avatar: "./public/cooment1.jpg",
+    avatar: `${BASE}comment1.jpg`,
     text: "Lorem, ipsum dolor sit amet consectetur adipisicing elit...",
     highlight: false,
   },
   {
     name: "MAX JEFFERSON",
-    avatar: "./public/cooment2.jpg",
+    avatar: `${BASE}comment1.jpg`,
     text: "Lorem, ipsum dolor sit amet consectetur adipisicing elit...",
     highlight: true,
   },
   {
     name: "MARK JOGEL",
-    avatar: "./public/comment2.jpg",
+    avatar: `${BASE}comment2.jpg`,
     text: "Lorem, ipsum dolor sit amet consectetur adipisicing elit...",
     highlight: false,
   },
