@@ -256,6 +256,24 @@ const ExamAttempt = () => {
 
   const currentQuestion = exam.questions[currentQuestionIndex];
 
+  // Add safety check for currentQuestion
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">No Questions Available</h2>
+          <p className="text-gray-600 mb-6">This exam doesn't have any questions yet.</p>
+          <button
+            onClick={() => navigate('/exam')}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+          >
+            Back to Exams
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Timer */}
@@ -405,9 +423,9 @@ const ExamAttempt = () => {
                     Question {currentQuestionIndex + 1} of {exam.questions.length}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>Type: {currentQuestion.questionType}</span>
-                    <span>Marks: {currentQuestion.marks}</span>
-                    <span>Difficulty: {currentQuestion.difficulty}</span>
+                    <span>Type: {currentQuestion.questionType || 'Not specified'}</span>
+                    <span>Marks: {currentQuestion.marks || 1}</span>
+                    <span>Difficulty: {currentQuestion.difficulty || 'Not specified'}</span>
                   </div>
                 </div>
               </div>
@@ -415,13 +433,13 @@ const ExamAttempt = () => {
               {/* Question Text */}
               <div className="mb-6">
                 <p className="text-lg text-gray-800 leading-relaxed">
-                  {currentQuestion.questionText}
+                  {currentQuestion.questionText || currentQuestion.text || 'Question text not available'}
                 </p>
               </div>
 
               {/* Question Options */}
               <div className="space-y-3">
-                {currentQuestion.questionType === 'Multiple Choice' && currentQuestion.options && (
+                {(currentQuestion.questionType === 'Multiple Choice' || currentQuestion.questionType === 'MCQ') && currentQuestion.options && (
                   currentQuestion.options.map((option, optionIndex) => (
                     <label
                       key={optionIndex}
@@ -440,7 +458,7 @@ const ExamAttempt = () => {
                   ))
                 )}
 
-                {currentQuestion.questionType === 'True/False' && (
+                {(currentQuestion.questionType === 'True/False' || currentQuestion.questionType === 'TrueFalse') && (
                   <div className="space-y-3">
                     {['True', 'False'].map((option) => (
                       <label
@@ -461,7 +479,7 @@ const ExamAttempt = () => {
                   </div>
                 )}
 
-                {currentQuestion.questionType === 'Short Answer' && (
+                {(currentQuestion.questionType === 'Short Answer' || currentQuestion.questionType === 'ShortAnswer') && (
                   <textarea
                     placeholder="Type your answer here..."
                     value={answers[currentQuestion._id]?.selectedAnswer || ''}
@@ -471,7 +489,7 @@ const ExamAttempt = () => {
                   />
                 )}
 
-                {currentQuestion.questionType === 'Essay' && (
+                {(currentQuestion.questionType === 'Essay' || currentQuestion.questionType === 'Essay') && (
                   <textarea
                     placeholder="Type your detailed answer here..."
                     value={answers[currentQuestion._id]?.selectedAnswer || ''}

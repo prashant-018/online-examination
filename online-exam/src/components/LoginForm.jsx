@@ -48,21 +48,33 @@ const LoginForm = () => {
     }
   };
 
-  // ✅ Load Google Sign-In on mount
+  // ✅ Load Google Sign-In on mount (temporarily disabled to fix 403 error)
   useEffect(() => {
     /* global google */
+    // Temporarily disabled Google OAuth due to configuration issues
+    /*
     if (window.google) {
-      google.accounts.id.initialize({
-        client_id: "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com", // ✅ Your real client ID
-        callback: handleCallbackResponse,
-      });
+      try {
+        google.accounts.id.initialize({
+          client_id: "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com", // ✅ Your real client ID
+          callback: handleCallbackResponse,
+        });
 
-      google.accounts.id.renderButton(document.getElementById("googleSignInDiv"), {
-        theme: "outline",
-        size: "large",
-        width: "100%",
-      });
+        google.accounts.id.renderButton(document.getElementById("googleSignInDiv"), {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+        });
+      } catch (error) {
+        console.warn('Google OAuth initialization failed:', error);
+        // Hide Google sign-in button if initialization fails
+        const googleDiv = document.getElementById("googleSignInDiv");
+        if (googleDiv) {
+          googleDiv.style.display = 'none';
+        }
+      }
     }
+    */
   }, []);
 
   const handleChange = (e) => {
@@ -158,10 +170,11 @@ const LoginForm = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        {/* Temporarily disabled Google OAuth due to configuration issues */}
+        {/* <div className="mt-6 text-center">
           <div className="mb-2 text-gray-500">OR</div>
           <div id="googleSignInDiv" className="flex justify-center" />
-        </div>
+        </div> */}
       </div>
     </div>
   );

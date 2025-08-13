@@ -8,7 +8,10 @@ const ExamCards = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all'); // all, upcoming, active, ended
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [examToDelete, setExamToDelete] = useState(null);
 
   useEffect(() => {
     fetchExams();
@@ -16,6 +19,7 @@ const ExamCards = () => {
 
   const fetchExams = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/exams', {
         headers: {
@@ -25,7 +29,10 @@ const ExamCards = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setExams(data);
+        const normalized = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.exams) ? data.exams : []);
+        setExams(normalized);
       } else {
         throw new Error('Failed to fetch exams');
       }
@@ -40,211 +47,497 @@ const ExamCards = () => {
     navigate(`/exam-attempt/${exam._id}`);
   };
 
-  const getFilteredExams = () => {
-    const now = new Date();
+  const handleCreateExam = () => {
+    navigate('/create-exam');
+  };
 
-    switch (filter) {
-      case 'upcoming':
-        return exams.filter(exam => new Date(exam.startTime) > now);
-      case 'active':
-        return exams.filter(exam =>
-          new Date(exam.startTime) <= now && new Date(exam.endTime) >= now
-        );
-      case 'ended':
-        return exams.filter(exam => new Date(exam.endTime) < now);
-      default:
-        return exams;
+  const handleEditExam = (exam) => {
+    navigate(`/edit-exam/${exam._id}`);
+  };
+
+  const handleViewExam = (exam) => {
+    navigate(`/exam-details/${exam._id}`);
+  };
+
+  const handleDeleteExam = (exam) => {
+    setExamToDelete(exam);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteExam = async () => {
+    if (!examToDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/exams/${examToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setExams(exams.filter(exam => exam._id !== examToDelete._id));
+        setShowDeleteModal(false);
+        setExamToDelete(null);
+      } else {
+        throw new Error('Failed to delete exam');
+      }
+    } catch (err) {
+      setError(err.message);
     }
   };
 
-  const getStatusColor = (exam) => {
+  const getFilteredExams = () => {
     const now = new Date();
-    const startTime = new Date(exam.startTime);
-    const endTime = new Date(exam.endTime);
+    let filtered = exams;
 
-    if (now < startTime) return 'bg-blue-100 text-blue-800';
-    if (now > endTime) return 'bg-red-100 text-red-800';
-    return 'bg-green-100 text-green-800';
+    // Apply status filter
+    switch (filter) {
+      case 'upcoming':
+        filtered = filtered.filter(exam => new Date(exam.startTime) > now);
+        break;
+      case 'active':
+        filtered = filtered.filter(exam =>
+          new Date(exam.startTime) <= now && new Date(exam.endTime) >= now
+        );
+        break;
+      case 'ended':
+        filtered = filtered.filter(exam => new Date(exam.endTime) < now);
+        break;
+      default:
+        // No filter applied
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(exam =>
+        exam.title.toLowerCase().includes(term) ||
+        exam.subject.toLowerCase().includes(term) ||
+        exam.description.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered;
   };
 
-  const getStatusText = (exam) => {
+  const getStatus = (exam) => {
     const now = new Date();
     const startTime = new Date(exam.startTime);
     const endTime = new Date(exam.endTime);
 
-    if (now < startTime) return 'Upcoming';
-    if (now > endTime) return 'Ended';
-    return 'Active';
+    if (now < startTime) return {
+      text: 'Upcoming',
+      color: 'bg-blue-100 text-blue-800',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    };
+    if (now > endTime) return {
+      text: 'Ended',
+      color: 'bg-gray-100 text-gray-800',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    };
+    return {
+      text: 'Active',
+      color: 'bg-green-100 text-green-800',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      )
+    };
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString([], {
+    return new Date(dateString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
+  const getSubjectIcon = (subject) => {
+    const icons = {
+      'Mathematics': '🧮',
+      'Computer Science': '💻',
+      'Islamic Studies': '☪️',
+      'Web Engineering': '🌐',
+      'English': '📖',
+      'Physics': '⚛️',
+      'Chemistry': '🧪',
+      'Biology': '🧬'
+    };
+    return icons[subject] || '📝';
+  };
+
+  const getSubjectColor = (subject) => {
+    const colors = {
+      'Mathematics': 'from-blue-500 to-blue-600',
+      'Computer Science': 'from-purple-500 to-purple-600',
+      'Islamic Studies': 'from-green-500 to-green-600',
+      'Web Engineering': 'from-indigo-500 to-indigo-600',
+      'English': 'from-red-500 to-red-600',
+      'Physics': 'from-yellow-500 to-yellow-600',
+      'Chemistry': 'from-pink-500 to-pink-600',
+      'Biology': 'from-teal-500 to-teal-600'
+    };
+    return colors[subject] || 'from-gray-500 to-gray-600';
+  };
+
   if (loading) {
     return (
-      <section className="bg-gray-100 py-10 px-4 md:px-12">
-        <div className="text-center py-20">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading available exams...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="inline-flex items-center justify-center mb-6">
+            <svg className="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-medium text-gray-800 mb-2">Loading Exams</h2>
+          <p className="text-gray-500">Please wait while we load available exams...</p>
         </div>
-      </section>
+        </div>
     );
   }
 
   if (error) {
     return (
-      <section className="bg-gray-100 py-10 px-4 md:px-12">
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Exams</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-md">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-medium text-gray-800 mb-2">Error Loading Exams</h2>
+          <p className="text-gray-500 mb-6">{error}</p>
           <button
             onClick={fetchExams}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Try Again
           </button>
         </div>
-      </section>
+      </div>
     );
   }
 
   const filteredExams = getFilteredExams();
+  const filterCounts = {
+    all: exams.length,
+    upcoming: exams.filter(e => new Date(e.startTime) > new Date()).length,
+    active: exams.filter(e => new Date(e.startTime) <= new Date() && new Date(e.endTime) >= new Date()).length,
+    ended: exams.filter(e => new Date(e.endTime) < new Date()).length
+  };
 
   return (
-    <section className="bg-gray-100 py-10 px-4 md:px-12">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h2 className="inline-block bg-[#1658a0] text-white px-4 py-2 text-lg font-semibold rounded shadow mb-4">
-          📚 Available Exams
-        </h2>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {user?.role === 'Teacher' ? 'Exam Management' : 'Available Exams'}
+              </h1>
+              <p className="text-gray-500 mt-1">
+                {user?.role === 'Teacher' 
+                  ? 'Create, edit, and manage your exams' 
+                  : 'Browse and attempt your exams'
+                }
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search exams..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              {user?.role === 'Teacher' && (
+                <button
+                  onClick={handleCreateExam}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create New Exam
+                </button>
+              )}
+            </div>
+          </div>
 
         {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[
-            { key: 'all', label: 'All Exams', count: exams.length },
-            { key: 'upcoming', label: 'Upcoming', count: exams.filter(e => new Date(e.startTime) > new Date()).length },
-            { key: 'active', label: 'Active', count: exams.filter(e => new Date(e.startTime) <= new Date() && new Date(e.endTime) >= new Date()).length },
-            { key: 'ended', label: 'Ended', count: exams.filter(e => new Date(e.endTime) < new Date()).length }
-          ].map(({ key, label, count }) => (
+          <div className="flex flex-wrap gap-2">
+            {['all', 'upcoming', 'active', 'ended'].map((key) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${filter === key
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filter === key
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
-            >
-              {label} ({count})
+              >
+                {key.charAt(0).toUpperCase() + key.slice(1)} ({filterCounts[key]})
             </button>
           ))}
         </div>
       </div>
 
       {filteredExams.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            {filter === 'all' ? 'No exams available' : `No ${filter} exams`}
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
+              <svg className="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              {searchTerm
+                ? 'No matching exams found'
+                : filter === 'all'
+                ? user?.role === 'Teacher' ? 'No exams created yet' : 'No exams available'
+                : `No ${filter} exams`}
           </h3>
-          <p className="text-gray-500">
-            {filter === 'all'
-              ? 'Check back later for new exams.'
-              : `There are currently no ${filter} exams.`
-            }
-          </p>
+            <p className="text-gray-500 mb-6">
+              {searchTerm
+                ? 'Try a different search term'
+                : filter === 'all'
+                ? user?.role === 'Teacher' 
+                  ? 'Create your first exam to get started'
+                  : 'Check back later for new exams'
+                : `There are currently no ${filter} exams`}
+            </p>
+            {filter === 'all' && user?.role === 'Teacher' && (
+              <button
+                onClick={handleCreateExam}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create Your First Exam
+              </button>
+            )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredExams.map((exam) => (
+            {filteredExams.map((exam) => {
+              const status = getStatus(exam);
+              const subjectColor = getSubjectColor(exam.subject);
+              const isOwner = user?.role === 'Teacher' && exam.createdBy === user.id;
+              
+              return (
             <div
               key={exam._id}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200"
-            >
-              {/* Subject Image Placeholder */}
-              <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <div className="text-white text-center">
-                  <div className="text-4xl mb-2">
-                    {exam.subject === 'Mathematics' ? '📐' :
-                      exam.subject === 'Computer Science' ? '💻' :
-                        exam.subject === 'Islamic Studies' ? '☪️' :
-                          exam.subject === 'Web Engineering' ? '🌐' :
-                            exam.subject === 'English' ? '📚' :
-                              exam.subject === 'Physics' ? '⚛️' :
-                                exam.subject === 'Chemistry' ? '🧪' :
-                                  exam.subject === 'Biology' ? '🧬' : '📝'}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
+                >
+                  {/* Subject Header */}
+                  <div className={`bg-gradient-to-r ${subjectColor} p-4 flex items-center`}>
+                    <div className="bg-white bg-opacity-20 rounded-full p-3 mr-3">
+                      <span className="text-xl">{getSubjectIcon(exam.subject)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white">{exam.subject}</h3>
+                      <p className="text-white text-opacity-80 text-sm">{exam.questions?.length || 0} questions</p>
                   </div>
-                  <div className="font-semibold text-lg">{exam.subject}</div>
+                    {isOwner && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewExam(exam);
+                          }}
+                          className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                          title="View Details"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditExam(exam);
+                          }}
+                          className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                          title="Edit Exam"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteExam(exam);
+                          }}
+                          className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                          title="Delete Exam"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                 </div>
+                    )}
               </div>
 
-              <div className="p-6">
-                {/* Status Badge */}
+                  <div className="p-5 flex flex-col flex-grow">
+                    {/* Status and Title */}
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(exam)}`}>
-                    {getStatusText(exam)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                        {status.icon}
+                        <span className="ml-1">{status.text}</span>
                   </span>
-                  <span className="text-sm text-gray-500">
-                    {exam.questions?.length || 0} questions
+                      <span className="text-xs text-gray-500">
+                        {formatDate(exam.startTime)}
                   </span>
                 </div>
 
-                {/* Exam Title */}
-                <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
                   {exam.title}
                 </h3>
 
-                {/* Description */}
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                   {exam.description}
                 </p>
 
                 {/* Exam Details */}
-                <div className="space-y-2 mb-4 text-sm text-gray-500">
-                  <div className="flex justify-between">
-                    <span>Duration:</span>
-                    <span className="font-medium">{exam.duration} minutes</span>
+                    <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Duration</p>
+                        <p className="font-medium">{exam.duration} min</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Total Marks</p>
+                        <p className="font-medium">{exam.totalMarks}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Total Marks:</span>
-                    <span className="font-medium">{exam.totalMarks}</span>
+                      <div>
+                        <p className="text-gray-500">Passing Marks</p>
+                        <p className="font-medium">{exam.passingMarks}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Passing Marks:</span>
-                    <span className="font-medium">{exam.passingMarks}</span>
+                      <div>
+                        <p className="text-gray-500">Max Attempts</p>
+                        <p className="font-medium">{exam.maxAttempts || 'Unlimited'}</p>
                   </div>
                 </div>
 
                 {/* Time Information */}
-                <div className="text-xs text-gray-400 mb-4">
-                  <div>Start: {formatDate(exam.startTime)} at {formatTime(exam.startTime)}</div>
-                  <div>End: {formatDate(exam.endTime)} at {formatTime(exam.endTime)}</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded mb-4">
+                      <div className="flex items-center mb-1">
+                        <svg className="h-3 w-3 mr-1 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Starts: {formatTime(exam.startTime)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <svg className="h-3 w-3 mr-1 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Ends: {formatTime(exam.endTime)}</span>
+                      </div>
                 </div>
 
-                {/* Action Button */}
+                    {/* Action Button - positioned at bottom with mt-auto */}
+                    <div className="mt-auto">
+                      {user?.role === 'Teacher' && isOwner ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleViewExam(exam)}
+                            className="flex-1 py-2 px-3 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded transition-colors"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => handleEditExam(exam)}
+                            className="flex-1 py-2 px-3 text-sm font-medium text-green-600 hover:text-green-700 border border-green-200 hover:border-green-300 rounded transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      ) : (
                 <button
                   onClick={() => startExam(exam)}
-                  disabled={getStatusText(exam) === 'Ended'}
-                  className={`w-full py-2 px-4 rounded-lg font-semibold transition ${getStatusText(exam) === 'Ended'
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
+                          disabled={status.text === 'Ended'}
+                          className={`w-full py-2 px-4 rounded-md text-sm font-medium text-white transition-colors ${
+                            status.text === 'Upcoming' ? 'bg-blue-600 hover:bg-blue-700' :
+                            status.text === 'Active' ? 'bg-green-600 hover:bg-green-700' :
+                            'bg-gray-300 cursor-not-allowed'
+                          }`}
+                        >
+                          {status.text === 'Ended' ? 'Exam Ended' : 'Start Exam'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Exam</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete "{examToDelete?.title}"? This action cannot be undone.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
-                  {getStatusText(exam) === 'Ended' ? 'Exam Ended' : 'Start Exam'}
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteExam}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                >
+                  Delete
                 </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       )}
-    </section>
+    </div>
   );
 };
 
