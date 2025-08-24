@@ -43,6 +43,15 @@ export const ExamProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('Auth check failed:', error);
+          
+          // Check if it's a connection error
+          if (error.message === 'Failed to fetch') {
+            console.error('❌ Server is not running. Please start the backend server first.');
+            console.error('💡 To start the server:');
+            console.error('   1. Double-click start-server.bat in the root directory');
+            console.error('   2. Or run: cd server && npm run dev');
+          }
+          
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setUser(null);

@@ -1,5 +1,5 @@
 // App.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -26,9 +26,11 @@ import Services from './components/Services';
 import ExamAdd from './components/ExamAdd';
 import Profile from './components/Profile';
 import Unauthorized from './components/Unauthorized';
+import ManageExam from './components/ManageExam';
 
 const AppContent = () => {
   const { isAuthenticated, user, loading } = useExamContext();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // ✅ start closed
 
   if (loading) {
     return (
@@ -40,13 +42,26 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar (only when logged in) */}
       {isAuthenticated && (
-        <Sidebar user={user} />
+        <Sidebar
+          user={user}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
       )}
 
-      <div className="flex-1 flex flex-col overflow-y-auto">
+      {/* Main content area */}
+      <div
+        className={`flex-1 flex flex-col overflow-y-auto transition-all duration-200 ${isAuthenticated && isSidebarOpen ? 'ml-60' : 'ml-0'
+          }`}
+      >
         {isAuthenticated && (
-          <Header user={user} />
+          <Header
+            user={user}
+            isSidebarOpen={isSidebarOpen} // ✅ pass state
+            onToggleSidebar={() => setIsSidebarOpen(true)} // ✅ open only
+          />
         )}
 
         <Routes>
@@ -59,21 +74,13 @@ const AppContent = () => {
           <Route
             path="/register"
             element={
-              isAuthenticated ? (
-                <Navigate to="/home" replace />
-              ) : (
-                <RegistrationForm />
-              )
+              isAuthenticated ? <Navigate to="/home" replace /> : <RegistrationForm />
             }
           />
           <Route
             path="/login"
             element={
-              isAuthenticated ? (
-                <Navigate to="/home" replace />
-              ) : (
-                <LoginForm />
-              )
+              isAuthenticated ? <Navigate to="/home" replace /> : <LoginForm />
             }
           />
 
@@ -91,6 +98,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <ExamCards />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage-exams"
+            element={
+              <ProtectedRoute requiredRole="Teacher">
+                <ManageExam />
               </ProtectedRoute>
             }
           />

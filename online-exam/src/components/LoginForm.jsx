@@ -3,6 +3,10 @@ import jwt_decode from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
 import { useExamContext } from './context/ExamContext';
 
+// Use environment variables to configure API base and Google Client ID
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:5000';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com";
+
 const LoginForm = () => {
   const navigate = useNavigate();
   const { login } = useExamContext();
@@ -21,7 +25,7 @@ const LoginForm = () => {
       console.log("Google User:", userObject);
 
       // Send Google user data to backend
-      const apiResponse = await fetch('http://localhost:5000/api/auth/google/success', {
+      const apiResponse = await fetch(`${API_BASE}/api/auth/google/success`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,22 +52,20 @@ const LoginForm = () => {
     }
   };
 
-  // ✅ Load Google Sign-In on mount (temporarily disabled to fix 403 error)
+  // ✅ Load Google Sign-In on mount
   useEffect(() => {
     /* global google */
-    // Temporarily disabled Google OAuth due to configuration issues
-    /*
     if (window.google) {
       try {
         google.accounts.id.initialize({
-          client_id: "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com", // ✅ Your real client ID
+          client_id: GOOGLE_CLIENT_ID, // ✅ Read from env
           callback: handleCallbackResponse,
         });
 
         google.accounts.id.renderButton(document.getElementById("googleSignInDiv"), {
           theme: "outline",
           size: "large",
-          width: "100%",
+          width: 300, // ✅ Must be a number between 120-400, not a percentage
         });
       } catch (error) {
         console.warn('Google OAuth initialization failed:', error);
@@ -74,7 +76,6 @@ const LoginForm = () => {
         }
       }
     }
-    */
   }, []);
 
   const handleChange = (e) => {
@@ -98,7 +99,7 @@ const LoginForm = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/login', {
+      const response = await fetch(`${API_BASE}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,9 +124,9 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-800 flex items-center justify-center">
+    <div className="min-h-screen bg-[#1658a0] flex items-center justify-center">
       <div className="bg-gray-100 p-8 rounded-md shadow-md w-[90%] max-w-2xl">
-        <h2 className="text-blue-800 font-bold text-sm mb-6">LOGIN</h2>
+        <h2 className="text-[#1658a0] font-bold text-sm mb-6">LOGIN</h2>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -156,7 +157,7 @@ const LoginForm = () => {
 
           <div className="text-sm text-gray-600">
             • Don't have an account{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link to="/register" className="text-[#1658a0] hover:underline">
               Register
             </Link>
           </div>
@@ -164,17 +165,16 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#1658a0] text-[#1658a0] text-white py-2 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        {/* Temporarily disabled Google OAuth due to configuration issues */}
-        {/* <div className="mt-6 text-center">
+        <div className="mt-6 text-center">
           <div className="mb-2 text-gray-500">OR</div>
           <div id="googleSignInDiv" className="flex justify-center" />
-        </div> */}
+        </div>
       </div>
     </div>
   );

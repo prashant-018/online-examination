@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 
 // Load environment variables
 dotenv.config();
@@ -211,9 +212,9 @@ app.get('/api/auth/google/callback', (req, res) => {
   res.redirect(redirectUrl);
 });
 
-app.post('/api/auth/google/success', (req, res) => {
+app.post('/api/auth/google/success', async (req, res) => {
   try {
-    const { googleId, name, email, avatar, accessToken } = req.body;
+    const { googleId, name, email, avatar } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -222,26 +223,54 @@ app.post('/api/auth/google/success', (req, res) => {
       });
     }
 
-    // Mock user creation/login
-    const user = {
-      id: googleId || 'google-user-' + Date.now(),
-      name: name || 'Google User',
-      email: email,
-      avatar: avatar || 'https://lh3.googleusercontent.com/a/default-user',
-      role: 'Student',
-      provider: 'google',
-      isVerified: true
-    };
+    // Check if user exists with Google ID
+    let user = await User.findOne({ googleId });
 
-    // Mock JWT token
-    const token = 'google-jwt-token-' + Date.now();
+    if (!user) {
+      // Check if user exists with email
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link existing account with Google
+        user.googleId = googleId;
+        user.avatar = avatar;
+        user.isEmailVerified = true;
+        await user.save();
+      } else {
+        // Create new user
+        user = new User({
+          name: name || 'Google User',
+          email,
+          googleId,
+          avatar,
+          isEmailVerified: true,
+          role: 'Student' // Default role for OAuth users
+        });
+        await user.save();
+      }
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      process.env.JWT_SECRET || 'dev-secret',
+      { expiresIn: '7d' }
+    );
+
+    // Remove password from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
 
     res.json({
       message: 'Google login successful',
       code: 'GOOGLE_LOGIN_SUCCESS',
       token: token,
-      user: user,
-      expiresIn: 3600
+      user: userResponse,
+      expiresIn: 7 * 24 * 60 * 60
     });
   } catch (error) {
     console.error('Google OAuth error:', error);

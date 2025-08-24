@@ -24,6 +24,37 @@ const ExamAttempt = () => {
     fetchExam();
   }, [examId]);
 
+  // Once exam is loaded, enforce access rules
+  useEffect(() => {
+    if (!exam) return;
+    // Only students can attempt
+    if (user?.role !== 'Student') {
+      setError('Only students can attempt exams.');
+      navigate(`/exam-details/${exam._id}`);
+      return;
+    }
+    // Respect allowed roles
+    if (Array.isArray(exam?.allowedRoles) && !exam.allowedRoles.includes('Student')) {
+      setError('You are not allowed to attempt this exam.');
+      navigate('/exam');
+      return;
+    }
+    // Time window check
+    const now = new Date();
+    const starts = new Date(exam.startTime);
+    const ends = new Date(exam.endTime);
+    if (now < starts) {
+      setError('This exam has not started yet.');
+      navigate('/exam');
+      return;
+    }
+    if (now > ends) {
+      setError('This exam has already ended.');
+      navigate('/exam');
+      return;
+    }
+  }, [exam, user, navigate]);
+
   useEffect(() => {
     if (exam && timeLeft > 0) {
       timerRef.current = setInterval(() => {
@@ -254,10 +285,11 @@ const ExamAttempt = () => {
     );
   }
 
-  const currentQuestion = exam.questions[currentQuestionIndex];
+  const hasQuestions = Array.isArray(exam.questions) && exam.questions.length > 0;
+  const currentQuestion = hasQuestions ? exam.questions[currentQuestionIndex] : null;
 
-  // Add safety check for currentQuestion
-  if (!currentQuestion) {
+  // If there are no questions, still show the Instructions first. After user clicks Start, show the empty state.
+  if (!hasQuestions && !showInstructions) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -296,7 +328,7 @@ const ExamAttempt = () => {
             <div className="text-right">
               <div className="text-sm text-gray-500 mb-1">Progress</div>
               <div className="text-lg font-semibold text-gray-800">
-                {currentQuestionIndex + 1} / {exam.questions.length}
+                {hasQuestions ? (currentQuestionIndex + 1) : 0} / {hasQuestions ? exam.questions.length : 0}
               </div>
             </div>
           </div>
@@ -372,15 +404,15 @@ const ExamAttempt = () => {
               <h3 className="font-semibold text-gray-800 mb-4">Question Navigation</h3>
 
               <div className="grid grid-cols-5 lg:grid-cols-3 gap-2">
-                {exam.questions.map((question, index) => (
+                {hasQuestions && exam.questions.map((question, index) => (
                   <button
                     key={question._id}
                     onClick={() => handleQuestionNavigation(index)}
                     className={`p-2 rounded-lg text-sm font-medium transition ${index === currentQuestionIndex
-                        ? 'bg-blue-600 text-white'
-                        : getQuestionStatus(index) === 'answered'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white'
+                      : getQuestionStatus(index) === 'answered'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                   >
                     {index + 1}
@@ -419,27 +451,37 @@ const ExamAttempt = () => {
               {/* Question Header */}
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                    Question {currentQuestionIndex + 1} of {exam.questions.length}
-                  </h2>
+                  {hasQuestions && (
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                      Question {currentQuestionIndex + 1} of {exam.questions.length}
+                    </h2>
+                  )}
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>Type: {currentQuestion.questionType || 'Not specified'}</span>
-                    <span>Marks: {currentQuestion.marks || 1}</span>
-                    <span>Difficulty: {currentQuestion.difficulty || 'Not specified'}</span>
+                    {hasQuestions && currentQuestion && (
+                      <span>Type: {currentQuestion.questionType || 'Not specified'}</span>
+                    )}
+                    {hasQuestions && currentQuestion && (
+                      <span>Marks: {currentQuestion.marks || 1}</span>
+                    )}
+                    {hasQuestions && currentQuestion && (
+                      <span>Difficulty: {currentQuestion.difficulty || 'Not specified'}</span>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Question Text */}
               <div className="mb-6">
-                <p className="text-lg text-gray-800 leading-relaxed">
-                  {currentQuestion.questionText || currentQuestion.text || 'Question text not available'}
-                </p>
+                {hasQuestions && currentQuestion && (
+                  <p className="text-lg text-gray-800 leading-relaxed">
+                    {currentQuestion.questionText || currentQuestion.text || 'Question text not available'}
+                  </p>
+                )}
               </div>
 
               {/* Question Options */}
               <div className="space-y-3">
-                {(currentQuestion.questionType === 'Multiple Choice' || currentQuestion.questionType === 'MCQ') && currentQuestion.options && (
+                {hasQuestions && currentQuestion && (currentQuestion.questionType === 'Multiple Choice' || currentQuestion.questionType === 'MCQ' || !currentQuestion.questionType) && currentQuestion.options && (
                   currentQuestion.options.map((option, optionIndex) => (
                     <label
                       key={optionIndex}
@@ -458,7 +500,7 @@ const ExamAttempt = () => {
                   ))
                 )}
 
-                {(currentQuestion.questionType === 'True/False' || currentQuestion.questionType === 'TrueFalse') && (
+                {hasQuestions && currentQuestion && (currentQuestion.questionType === 'True/False' || currentQuestion.questionType === 'TrueFalse') && (
                   <div className="space-y-3">
                     {['True', 'False'].map((option) => (
                       <label
@@ -479,7 +521,7 @@ const ExamAttempt = () => {
                   </div>
                 )}
 
-                {(currentQuestion.questionType === 'Short Answer' || currentQuestion.questionType === 'ShortAnswer') && (
+                {hasQuestions && currentQuestion && (currentQuestion.questionType === 'Short Answer' || currentQuestion.questionType === 'ShortAnswer') && (
                   <textarea
                     placeholder="Type your answer here..."
                     value={answers[currentQuestion._id]?.selectedAnswer || ''}
@@ -489,7 +531,7 @@ const ExamAttempt = () => {
                   />
                 )}
 
-                {(currentQuestion.questionType === 'Essay' || currentQuestion.questionType === 'Essay') && (
+                {hasQuestions && currentQuestion && (currentQuestion.questionType === 'Essay') && (
                   <textarea
                     placeholder="Type your detailed answer here..."
                     value={answers[currentQuestion._id]?.selectedAnswer || ''}
@@ -504,7 +546,7 @@ const ExamAttempt = () => {
               <div className="flex justify-between mt-8 pt-6 border-t">
                 <button
                   onClick={() => handleQuestionNavigation(currentQuestionIndex - 1)}
-                  disabled={currentQuestionIndex === 0}
+                  disabled={!hasQuestions || currentQuestionIndex === 0}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ← Previous
@@ -512,7 +554,7 @@ const ExamAttempt = () => {
 
                 <button
                   onClick={() => handleQuestionNavigation(currentQuestionIndex + 1)}
-                  disabled={currentQuestionIndex === exam.questions.length - 1}
+                  disabled={!hasQuestions || currentQuestionIndex === exam.questions.length - 1}
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next →
@@ -556,4 +598,4 @@ const ExamAttempt = () => {
   );
 };
 
-export default ExamAttempt; 
+export default ExamAttempt;

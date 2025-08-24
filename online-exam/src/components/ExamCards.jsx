@@ -12,6 +12,8 @@ const ExamCards = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [examToDelete, setExamToDelete] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchExams();
@@ -44,6 +46,29 @@ const ExamCards = () => {
   };
 
   const startExam = (exam) => {
+    const now = new Date();
+
+    // Only students can attempt exams
+    if (user?.role !== 'Student') {
+      alert('Only students can attempt exams.');
+      return navigate('/exam');
+    }
+
+    // Respect allowed roles if present
+    if (Array.isArray(exam?.allowedRoles) && !exam.allowedRoles.includes('Student')) {
+      return alert('You are not allowed to attempt this exam.');
+    }
+
+    // Time window check: must be active
+    const starts = new Date(exam.startTime);
+    const ends = new Date(exam.endTime);
+    if (now < starts) {
+      return alert('Exam has not started yet.');
+    }
+    if (now > ends) {
+      return alert('This exam has ended.');
+    }
+
     navigate(`/exam-attempt/${exam._id}`);
   };
 
@@ -106,7 +131,7 @@ const ExamCards = () => {
         filtered = filtered.filter(exam => new Date(exam.endTime) < now);
         break;
       default:
-        // No filter applied
+      // No filter applied
     }
 
     // Apply search filter
@@ -180,7 +205,11 @@ const ExamCards = () => {
       'English': '📖',
       'Physics': '⚛️',
       'Chemistry': '🧪',
-      'Biology': '🧬'
+      'Biology': '🧬',
+      'Science': '🔬',
+      'History': '📜',
+      'Geography': '🌍',
+      'Economics': '💹'
     };
     return icons[subject] || '📝';
   };
@@ -194,9 +223,51 @@ const ExamCards = () => {
       'English': 'from-red-500 to-red-600',
       'Physics': 'from-yellow-500 to-yellow-600',
       'Chemistry': 'from-pink-500 to-pink-600',
-      'Biology': 'from-teal-500 to-teal-600'
+      'Biology': 'from-teal-500 to-teal-600',
+      'Science': 'from-orange-500 to-orange-600',
+      'History': 'from-amber-500 to-amber-600',
+      'Geography': 'from-cyan-500 to-cyan-600',
+      'Economics': 'from-fuchsia-500 to-fuchsia-600'
     };
     return colors[subject] || 'from-gray-500 to-gray-600';
+  };
+
+  // Build a student-attempt URL that can be shared
+  const getExamLink = (exam) => {
+    const origin = typeof window !== 'undefined' && window.location && window.location.origin
+      ? window.location.origin
+      : '';
+    return `${origin}/exam-attempt/${exam._id}`;
+  };
+
+  const handleCopyLink = async (exam) => {
+    try {
+      const link = getExamLink(exam);
+      await navigator.clipboard.writeText(link);
+      setCopiedId(exam._id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+      alert('Failed to copy link.');
+    }
+  };
+
+  const handleShareLink = async (exam) => {
+    const link = getExamLink(exam);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `Exam: ${exam.title || exam.subject}`, url: link });
+      } catch (_) {
+        // user cancelled share
+      }
+    } else {
+      handleCopyLink(exam);
+    }
+  };
+
+  const clearFilters = () => {
+    setFilter('all');
+    setSearchTerm('');
   };
 
   if (loading) {
@@ -212,7 +283,7 @@ const ExamCards = () => {
           <h2 className="text-xl font-medium text-gray-800 mb-2">Loading Exams</h2>
           <p className="text-gray-500">Please wait while we load available exams...</p>
         </div>
-        </div>
+      </div>
     );
   }
 
@@ -249,20 +320,20 @@ const ExamCards = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
+        <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {user?.role === 'Teacher' ? 'Exam Management' : 'Available Exams'}
               </h1>
               <p className="text-gray-500 mt-1">
-                {user?.role === 'Teacher' 
-                  ? 'Create, edit, and manage your exams' 
+                {user?.role === 'Teacher'
+                  ? 'Create, edit, and manage your exams'
                   : 'Browse and attempt your exams'
                 }
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <div className="relative w-full">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -277,8 +348,18 @@ const ExamCards = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
-              
+
               {user?.role === 'Teacher' && (
                 <button
                   onClick={handleCreateExam}
@@ -290,31 +371,55 @@ const ExamCards = () => {
                   Create New Exam
                 </button>
               )}
+
+              {/* Mobile filter toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="md:hidden inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+              </button>
             </div>
           </div>
 
-        {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2">
-            {['all', 'upcoming', 'active', 'ended'].map((key) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filter === key
+          {/* Filter Tabs */}
+          <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {['all', 'upcoming', 'active', 'ended'].map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === key
                     ? 'bg-indigo-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                {key.charAt(0).toUpperCase() + key.slice(1)} ({filterCounts[key]})
-            </button>
-          ))}
+                    }`}
+                >
+                  {key.charAt(0).toUpperCase() + key.slice(1)} ({filterCounts[key]})
+                </button>
+              ))}
+              
+              {(filter !== 'all' || searchTerm) && (
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 flex items-center"
+                >
+                  Clear Filters
+                  <svg className="h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {filteredExams.length === 0 ? (
+        {filteredExams.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
-              <svg className="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -322,17 +427,17 @@ const ExamCards = () => {
               {searchTerm
                 ? 'No matching exams found'
                 : filter === 'all'
-                ? user?.role === 'Teacher' ? 'No exams created yet' : 'No exams available'
-                : `No ${filter} exams`}
-          </h3>
+                  ? user?.role === 'Teacher' ? 'No exams created yet' : 'No exams available'
+                  : `No ${filter} exams`}
+            </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm
                 ? 'Try a different search term'
                 : filter === 'all'
-                ? user?.role === 'Teacher' 
-                  ? 'Create your first exam to get started'
-                  : 'Check back later for new exams'
-                : `There are currently no ${filter} exams`}
+                  ? user?.role === 'Teacher'
+                    ? 'Create your first exam to get started'
+                    : 'Check back later for new exams'
+                  : `There are currently no ${filter} exams`}
             </p>
             {filter === 'all' && user?.role === 'Teacher' && (
               <button
@@ -345,17 +450,29 @@ const ExamCards = () => {
                 Create Your First Exam
               </button>
             )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(filter !== 'all' || searchTerm) && (
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 ml-3"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExams.map((exam) => {
               const status = getStatus(exam);
               const subjectColor = getSubjectColor(exam.subject);
-              const isOwner = user?.role === 'Teacher' && exam.createdBy === user.id;
-              
+              const userId = user?._id || user?.id;
+              const createdById = typeof exam.createdBy === 'object' && exam.createdBy !== null
+                ? (exam.createdBy._id || exam.createdBy.id)
+                : exam.createdBy;
+              const isOwner = String(createdById) === String(userId);
+
               return (
-            <div
-              key={exam._id}
+                <div
+                  key={exam._id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
                 >
                   {/* Subject Header */}
@@ -366,8 +483,8 @@ const ExamCards = () => {
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-white">{exam.subject}</h3>
                       <p className="text-white text-opacity-80 text-sm">{exam.questions?.length || 0} questions</p>
-                  </div>
-                    {isOwner && (
+                    </div>
+                    {user?.role === 'Teacher' && (
                       <div className="flex gap-1">
                         <button
                           onClick={(e) => {
@@ -376,6 +493,7 @@ const ExamCards = () => {
                           }}
                           className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
                           title="View Details"
+                          aria-label="View exam details"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -389,9 +507,36 @@ const ExamCards = () => {
                           }}
                           className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
                           title="Edit Exam"
+                          aria-label="Edit exam"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyLink(exam);
+                          }}
+                          className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                          title={copiedId === exam._id ? 'Copied!' : 'Copy link'}
+                          aria-label="Copy exam link"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16h8a2 2 0 002-2v-2m-6 6l-4-4m0 0l4-4m-4 4h12" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareLink(exam);
+                          }}
+                          className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                          title="Share link"
+                          aria-label="Share exam link"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zm9 9a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" />
                           </svg>
                         </button>
                         <button
@@ -401,36 +546,37 @@ const ExamCards = () => {
                           }}
                           className="p-1 text-white hover:bg-white hover:bg-opacity-20 rounded transition-colors"
                           title="Delete Exam"
+                          aria-label="Delete exam"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
-                </div>
+                      </div>
                     )}
-              </div>
+                  </div>
 
                   <div className="p-5 flex flex-col flex-grow">
                     {/* Status and Title */}
-                <div className="flex justify-between items-start mb-3">
+                    <div className="flex justify-between items-start mb-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
                         {status.icon}
                         <span className="ml-1">{status.text}</span>
-                  </span>
+                      </span>
                       <span className="text-xs text-gray-500">
                         {formatDate(exam.startTime)}
-                  </span>
-                </div>
+                      </span>
+                    </div>
 
                     <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-                  {exam.title}
-                </h3>
+                      {exam.title}
+                    </h3>
 
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {exam.description}
-                </p>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {exam.description}
+                    </p>
 
-                {/* Exam Details */}
+                    {/* Exam Details */}
                     <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                       <div>
                         <p className="text-gray-500">Duration</p>
@@ -439,18 +585,18 @@ const ExamCards = () => {
                       <div>
                         <p className="text-gray-500">Total Marks</p>
                         <p className="font-medium">{exam.totalMarks}</p>
-                  </div>
+                      </div>
                       <div>
                         <p className="text-gray-500">Passing Marks</p>
                         <p className="font-medium">{exam.passingMarks}</p>
-                  </div>
+                      </div>
                       <div>
                         <p className="text-gray-500">Max Attempts</p>
                         <p className="font-medium">{exam.maxAttempts || 'Unlimited'}</p>
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                {/* Time Information */}
+                    {/* Time Information */}
                     <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded mb-4">
                       <div className="flex items-center mb-1">
                         <svg className="h-3 w-3 mr-1 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -464,12 +610,12 @@ const ExamCards = () => {
                         </svg>
                         <span>Ends: {formatTime(exam.endTime)}</span>
                       </div>
-                </div>
+                    </div>
 
                     {/* Action Button - positioned at bottom with mt-auto */}
                     <div className="mt-auto">
-                      {user?.role === 'Teacher' && isOwner ? (
-                        <div className="flex gap-2">
+                      {user?.role === 'Teacher' ? (
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             onClick={() => handleViewExam(exam)}
                             className="flex-1 py-2 px-3 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded transition-colors"
@@ -482,16 +628,33 @@ const ExamCards = () => {
                           >
                             Edit
                           </button>
+                          <button
+                            onClick={() => handleCopyLink(exam)}
+                            className="flex-1 py-2 px-3 text-sm font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 hover:border-indigo-300 rounded transition-colors"
+                          >
+                            {copiedId === exam._id ? 'Copied' : 'Copy Link'}
+                          </button>
+                          <button
+                            onClick={() => handleShareLink(exam)}
+                            className="flex-1 py-2 px-3 text-sm font-medium text-purple-600 hover:text-purple-700 border border-purple-200 hover:border-purple-300 rounded transition-colors"
+                          >
+                            Share
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExam(exam)}
+                            className="flex-1 py-2 px-3 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded transition-colors"
+                          >
+                            Delete
+                          </button>
                         </div>
                       ) : (
-                <button
-                  onClick={() => startExam(exam)}
+                        <button
+                          onClick={() => startExam(exam)}
                           disabled={status.text === 'Ended'}
-                          className={`w-full py-2 px-4 rounded-md text-sm font-medium text-white transition-colors ${
-                            status.text === 'Upcoming' ? 'bg-blue-600 hover:bg-blue-700' :
+                          className={`w-full py-2 px-4 rounded-md text-sm font-medium text-white transition-colors ${status.text === 'Upcoming' ? 'bg-blue-600 hover:bg-blue-700' :
                             status.text === 'Active' ? 'bg-green-600 hover:bg-green-700' :
-                            'bg-gray-300 cursor-not-allowed'
-                          }`}
+                              'bg-gray-300 cursor-not-allowed'
+                            }`}
                         >
                           {status.text === 'Ended' ? 'Exam Ended' : 'Start Exam'}
                         </button>
@@ -507,8 +670,8 @@ const ExamCards = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

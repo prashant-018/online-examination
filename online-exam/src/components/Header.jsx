@@ -1,9 +1,9 @@
-// src/components/Header.jsx
-import React, { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useExamContext } from './context/ExamContext';
+import React, { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useExamContext } from "./context/ExamContext";
+import { HiOutlineBars3 } from "react-icons/hi2";
 
-const Header = ({ user }) => {
+const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useExamContext();
@@ -14,7 +14,7 @@ const Header = ({ user }) => {
 
   const handleNavClick = (path) => {
     if (location.pathname === path) {
-      navigate(0); // refresh
+      navigate(0);
     } else {
       navigate(path);
     }
@@ -30,12 +30,12 @@ const Header = ({ user }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   useEffect(() => {
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const getAvatarSrc = () => {
@@ -43,15 +43,25 @@ const Header = ({ user }) => {
       return `http://localhost:5000/uploads/${user.avatar}`;
     }
     if (user?.name) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=32&background=1658a0&color=fff`;
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        user.name
+      )}&size=32&background=1658a0&color=fff`;
     }
-    return '/dp.jpg';
+    return "/dp.jpg";
   };
 
   return (
     <div className="flex justify-between items-center px-6 py-4 bg-white shadow-sm relative">
-      {/* Left: Search */}
+      {/* Left: Sidebar toggle + Search */}
       <div className="flex items-center gap-4">
+        {!isSidebarOpen && ( // ✅ Show only when sidebar is closed
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-white bg-[#1658a0] rounded-lg hover:bg-blue-800 transition"
+          >
+            <HiOutlineBars3 size={20} />
+          </button>
+        )}
         <input
           type="text"
           placeholder="Search"
@@ -62,20 +72,26 @@ const Header = ({ user }) => {
       {/* Right: Navigation + Avatar */}
       <nav className="flex items-center gap-6 text-sm text-[#003366] font-semibold">
         <button
-          onClick={() => handleNavClick('/home')}
-          className={`pb-1 ${isActive('/home') ? 'border-b-2 border-blue-700' : 'hover:text-blue-600'}`}
+          onClick={() => handleNavClick("/home")}
+          className={`pb-1 ${
+            isActive("/home") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+          }`}
         >
           HOME
         </button>
         <button
-          onClick={() => handleNavClick('/services')}
-          className={`pb-1 ${isActive('/services') ? 'border-b-2 border-blue-700' : 'hover:text-blue-600'}`}
+          onClick={() => handleNavClick("/services")}
+          className={`pb-1 ${
+            isActive("/services") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+          }`}
         >
           SERVICES
         </button>
         <button
-          onClick={() => handleNavClick('/about')}
-          className={`pb-1 ${isActive('/about') ? 'border-b-2 border-blue-700' : 'hover:text-blue-600'}`}
+          onClick={() => handleNavClick("/about")}
+          className={`pb-1 ${
+            isActive("/about") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+          }`}
         >
           ABOUT US
         </button>
@@ -91,13 +107,15 @@ const Header = ({ user }) => {
           {dropdownOpen && (
             <div className="absolute right-0 top-12 bg-white border shadow-lg rounded-md w-56 z-50">
               <div className="p-4 text-sm">
-                <p className="font-semibold text-gray-800">{user?.name || 'User Name'}</p>
+                <p className="font-semibold text-gray-800">
+                  {user?.name || "User Name"}
+                </p>
                 <p className="text-gray-500 text-xs">{user?.email}</p>
                 <p className="text-gray-500 text-xs capitalize">{user?.role}</p>
               </div>
               <hr />
               <button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate("/profile")}
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
               >
                 View Profile

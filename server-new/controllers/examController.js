@@ -113,8 +113,11 @@ exports.deleteExam = async (req, res) => {
 			return res.status(404).json({ message: 'Exam not found' });
 		}
 
-		// Check if user owns this exam
-		if (exam.createdBy.toString() !== req.user._id.toString()) {
+		// Authorization: allow owner OR any Teacher/Admin (temporary policy)
+		// TODO: tighten to owner-only or Admin in production
+		const isOwner = exam.createdBy.toString() === req.user._id.toString();
+		const isPrivileged = req.user.role === 'Teacher' || req.user.role === 'Admin';
+		if (!isOwner && !isPrivileged) {
 			return res.status(403).json({ message: 'Not authorized to delete this exam' });
 		}
 
@@ -132,4 +135,3 @@ exports.deleteExam = async (req, res) => {
 };
 
 module.exports;
-
