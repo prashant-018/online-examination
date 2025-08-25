@@ -21,8 +21,9 @@ app.use(helmet({
 // CORS configuration
 app.use(cors({
   origin: [
-    "https://onlineexaam.netlify.app",  // Netlify frontend
-    "http://localhost:5173"             // local dev testing
+    "https://onlineexaam.netlify.app",            // Production Netlify domain
+    "https://68ac4dce573770e95de928f8--onlineexaam.netlify.app", // Preview deploy link
+    "http://localhost:5173"                       // Local development
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
