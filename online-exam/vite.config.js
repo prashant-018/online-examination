@@ -11,9 +11,9 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'https://online-examination-6.onrender.com',
+        target: 'http://localhost:5001',
         changeOrigin: true,
-        secure: true
+        secure: false
       }
     }
   }

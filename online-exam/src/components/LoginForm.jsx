@@ -98,26 +98,36 @@ const LoginForm = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`${API_BASE}/api/users/login`, {
+    const postJson = async (url, body) => {
+      const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
+      let data = null;
+      try { data = await res.json(); } catch { /* ignore non-JSON */ }
+      return { ok: res.ok, status: res.status, data };
+    };
 
-      const data = await response.json();
+    try {
+      // Try preferred route first
+      let result = await postJson(`${API_BASE}/api/auth/login`, formData);
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+      // If route not found, fallback to legacy route
+      if (result.status === 404) {
+        result = await postJson(`${API_BASE}/api/users/login`, formData);
+      }
+
+      if (!result.ok) {
+        const msg = result?.data?.message || `Login failed (HTTP ${result.status})`;
+        throw new Error(msg);
       }
 
       // Use context to login
-      login(data.user, data.token);
+      login(result.data.user, result.data.token);
       navigate('/home');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
