@@ -23,7 +23,8 @@ app.use(cors({
   origin: [
     "https://onlineexaam.netlify.app",            // Production Netlify domain
     "https://68ac4dce573770e95de928f8--onlineexaam.netlify.app", // Preview deploy link
-    "http://localhost:5173"                       // Local development
+    "http://localhost:5173",                      // Local development (Vite default)
+    "http://localhost:3000"                       // Local development (your current dev port)
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true

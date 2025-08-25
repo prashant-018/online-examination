@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useExamContext } from './context/ExamContext';
 
 // Use environment variables to configure API base and Google Client ID
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:5000';
+const API_BASE = (import.meta.env.VITE_API_BASE ?? '').trim();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com";
 
 const LoginForm = () => {
