@@ -40,7 +40,7 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
 
   const getAvatarSrc = () => {
     if (user?.avatar) {
-      return `http://localhost:5000/uploads/${user.avatar}`;
+      return `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`;
     }
     if (user?.name) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -73,25 +73,22 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
       <nav className="flex items-center gap-6 text-sm text-[#003366] font-semibold">
         <button
           onClick={() => handleNavClick("/home")}
-          className={`pb-1 ${
-            isActive("/home") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
-          }`}
+          className={`pb-1 ${isActive("/home") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+            }`}
         >
           HOME
         </button>
         <button
           onClick={() => handleNavClick("/services")}
-          className={`pb-1 ${
-            isActive("/services") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
-          }`}
+          className={`pb-1 ${isActive("/services") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+            }`}
         >
           SERVICES
         </button>
         <button
           onClick={() => handleNavClick("/about")}
-          className={`pb-1 ${
-            isActive("/about") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
-          }`}
+          className={`pb-1 ${isActive("/about") ? "border-b-2 border-blue-700" : "hover:text-blue-600"
+            }`}
         >
           ABOUT US
         </button>

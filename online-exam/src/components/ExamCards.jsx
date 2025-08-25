@@ -23,7 +23,7 @@ const ExamCards = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/exams', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -94,7 +94,7 @@ const ExamCards = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/exams/${examToDelete._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -400,7 +400,7 @@ const ExamCards = () => {
                   {key.charAt(0).toUpperCase() + key.slice(1)} ({filterCounts[key]})
                 </button>
               ))}
-              
+
               {(filter !== 'all' || searchTerm) && (
                 <button
                   onClick={clearFilters}
@@ -523,7 +523,7 @@ const ExamCards = () => {
                           aria-label="Copy exam link"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16h8a2 2 0 002-2v-2m-6 6l-4-4m0 0l4-4m-4 4h12" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-2m-6 6l-4-4m0 0l4-4m-4 4h12" />
                           </svg>
                         </button>
                         <button

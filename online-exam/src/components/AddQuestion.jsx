@@ -114,7 +114,7 @@ const AddQuestion = ({ examId, onQuestionAdded, onCancel }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/questions', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -279,8 +279,8 @@ const AddQuestion = ({ examId, onQuestionAdded, onCancel }) => {
                 <div
                   key={index}
                   className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${questionForm.correctAnswer === option
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-300 hover:border-gray-400'
                     }`}
                 >
                   <input

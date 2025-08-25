@@ -24,7 +24,7 @@ const Profile = () => {
         role: user.role || 'Student',
       });
       if (user.avatar) {
-        setPreviewUrl(`http://localhost:5000/uploads/${user.avatar}`);
+        setPreviewUrl(`${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`);
       }
     }
   }, [user]);
@@ -62,7 +62,7 @@ const Profile = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users/profile/picture', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile/picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +97,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ const Profile = () => {
       role: user.role || 'Student',
     });
     setProfilePicture(null);
-    setPreviewUrl(user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : '');
+    setPreviewUrl(user.avatar ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}` : '');
     setEditMode(false);
     setError('');
   };

@@ -47,7 +47,7 @@ const ExamAdd = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/exams/teacher/exams', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/teacher/exams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -90,8 +90,8 @@ const ExamAdd = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingExam
-        ? `http://localhost:5000/api/exams/${editingExam._id}`
-        : 'http://localhost:5000/api/exams';
+        ? `${import.meta.env.VITE_API_URL}/api/exams/${editingExam._id}`
+        : `${import.meta.env.VITE_API_URL}/api/exams`;
 
       const method = editingExam ? 'PUT' : 'POST';
 
@@ -152,7 +152,7 @@ const ExamAdd = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/exams/${examId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -216,7 +216,7 @@ const ExamAdd = () => {
           <div className="text-6xl mb-4">🚫</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Restricted</h1>
           <p className="text-gray-600 mb-6">This page is only accessible to teachers.</p>
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
@@ -511,7 +511,7 @@ const ExamAdd = () => {
           <div className="bg-white overflow-hidden">
             {loading ? (
               <div className="text-center py-12">
-                <svg className="animate-spin mx-auto h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin mx-auto h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

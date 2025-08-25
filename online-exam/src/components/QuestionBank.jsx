@@ -22,7 +22,7 @@ const QuestionBank = ({ onSelectQuestions, selectedQuestions = [], examSubject }
   const fetchQuestions = async () => {
     try {
       const token = localStorage.getItem('token');
-      let url = 'http://localhost:5000/api/questions';
+      let url = `${import.meta.env.VITE_API_URL}/api/questions`;
 
       // Add filters to URL
       const params = new URLSearchParams();
@@ -202,8 +202,8 @@ const QuestionBank = ({ onSelectQuestions, selectedQuestions = [], examSubject }
             <div
               key={question._id}
               className={`border rounded-lg p-4 cursor-pointer transition-all ${isQuestionSelected(question._id)
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               onClick={() => toggleQuestionSelection(question._id)}
             >
@@ -221,8 +221,8 @@ const QuestionBank = ({ onSelectQuestions, selectedQuestions = [], examSubject }
                       {question.questionText}
                     </h4>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${question.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                        question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                      question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
                       }`}>
                       {question.difficulty}
                     </span>

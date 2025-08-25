@@ -24,7 +24,7 @@ const ManageExam = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/exams', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/exams`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch exams');
@@ -44,7 +44,7 @@ const ManageExam = () => {
     if (!examToDelete) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/exams/${examToDelete._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -65,7 +65,7 @@ const ManageExam = () => {
     const now = new Date();
     const startTime = new Date(exam.startTime);
     const endTime = new Date(exam.endTime);
-    
+
     if (now < startTime) return 'upcoming';
     if (now >= startTime && now <= endTime) return 'ongoing';
     return 'completed';
@@ -132,7 +132,7 @@ const ManageExam = () => {
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative">
                 <select
@@ -149,7 +149,7 @@ const ManageExam = () => {
                   <FiFilter className="h-4 w-4" />
                 </div>
               </div>
-              
+
               <div className="relative">
                 <select
                   value={sortBy}
@@ -161,8 +161,8 @@ const ManageExam = () => {
                   <option value="title">By Title</option>
                 </select>
               </div>
-              
-              <button 
+
+              <button
                 onClick={onAdd}
                 className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
@@ -195,11 +195,11 @@ const ManageExam = () => {
             <FiBook className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No exams found</h3>
             <p className="text-gray-500 mb-6">
-              {search || filterStatus !== 'all' 
-                ? 'Try adjusting your search or filter to find what you are looking for.' 
+              {search || filterStatus !== 'all'
+                ? 'Try adjusting your search or filter to find what you are looking for.'
                 : 'Get started by creating your first exam.'}
             </p>
-            <button 
+            <button
               onClick={onAdd}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
@@ -220,9 +220,9 @@ const ManageExam = () => {
                         {status.charAt(0).toUpperCase() + status.slice(1)}
                       </span>
                     </div>
-                    
+
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">{exam.description}</p>
-                    
+
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                       <div className="flex items-center text-gray-600">
                         <FiBook className="mr-2 text-gray-400" />
@@ -237,7 +237,7 @@ const ManageExam = () => {
                         {exam.passingMarks}/{exam.totalMarks}
                       </div>
                     </div>
-                    
+
                     <div className="text-xs text-gray-500 mb-4">
                       <div className="flex items-center mb-1">
                         <FiCalendar className="mr-2" />
@@ -248,23 +248,23 @@ const ManageExam = () => {
                         Ends: {new Date(exam.endTime).toLocaleString()}
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between pt-4 border-t border-gray-100">
-                      <button 
+                      <button
                         onClick={() => onView(exam)}
                         className="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                       >
                         <FiEye className="mr-1" />
                         View
                       </button>
-                      <button 
+                      <button
                         onClick={() => onEdit(exam)}
                         className="inline-flex items-center text-green-600 hover:text-green-800 text-sm font-medium"
                       >
                         <FiEdit className="mr-1" />
                         Edit
                       </button>
-                      <button 
+                      <button
                         onClick={() => { setExamToDelete(exam); setShowDeleteModal(true); }}
                         className="inline-flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
                       >
@@ -286,17 +286,17 @@ const ManageExam = () => {
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Exam</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to delete "<span className="font-medium">{examToDelete?.title}</span>"? 
+              Are you sure you want to delete "<span className="font-medium">{examToDelete?.title}</span>"?
               This action cannot be undone and all exam data will be permanently removed.
             </p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={confirmDeleteExam}
                 className="px-4 py-2 bg-red-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
