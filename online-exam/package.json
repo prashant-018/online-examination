@@ -1,11 +1,11 @@
 {
   "name": "online-exam",
-  "homepage": "https://prashant-018.github.io/online-examination/"
-,
+  "homepage": "https://prashant-018.github.io/online-examination/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "predeploy": "npm run build",

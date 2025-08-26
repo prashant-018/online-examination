@@ -4,7 +4,7 @@
   "description": "Complete online examination system with React frontend and Node.js backend",
   "main": "index.js",
   "scripts": {
-    "start": "cd server-new && npm start",
+    "start": "npm run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd server-new && npm run dev",
     "dev:frontend": "cd online-exam && npm run dev",
