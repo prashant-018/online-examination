@@ -14,27 +14,30 @@ const app = express();
 
 // (Moved) Security middleware will be applied after CORS
 
-// CORS configuration for local development (Vite and CRA)
-// Allows http://localhost:3000 and http://localhost:5173 by default,
-// and optionally any additional origins from CLIENT_URLS (comma-separated) or CLIENT_URL.
-const defaultAllowed = new Set(['http://localhost:3000', 'http://localhost:5173']);
+// CORS configuration for localhost and production (Netlify)
+const allowedOrigins = new Set([
+  'http://localhost:3000',
+  'https://68b1633c0df5fe7bdc19d992--onlineexaam.netlify.app',
+]);
+
+// Allow additional origins via env (comma-separated), e.g. your Render URL
+// Example: CLIENT_URLS="https://online-examination-3-qaq1.onrender.com"
 const extraOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
-extraOrigins.forEach(o => defaultAllowed.add(o));
+extraOrigins.forEach(o => allowedOrigins.add(o));
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // non-browser requests
-    if (defaultAllowed.has(origin)) return callback(null, true);
-    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true); // any localhost port
+    if (!origin) return callback(null, true); // e.g. curl, server-to-server
+    if (allowedOrigins.has(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));

@@ -18,6 +18,8 @@ const Profile = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
 
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
   useEffect(() => {
     if (user) {
       setUpdatedUser({
@@ -26,7 +28,7 @@ const Profile = () => {
         role: user.role || 'Student',
       });
       if (user.avatar) {
-        setPreviewUrl(`http://localhost:5000/uploads/${user.avatar}?${new Date().getTime()}`);
+        setPreviewUrl(`${API_BASE}/uploads/${user.avatar}?${new Date().getTime()}`);
       }
     }
   }, [user]);
@@ -65,7 +67,7 @@ const Profile = () => {
     try {
       setUploading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/users/profile/picture`, {
+      const response = await fetch(`${API_BASE}/api/users/profile/picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +99,7 @@ const Profile = () => {
     try {
       setUploading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/users/profile/picture`, {
+      const response = await fetch(`${API_BASE}/api/users/profile/picture`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -130,7 +132,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/users/profile`, {
+      const response = await fetch(`${API_BASE}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +168,7 @@ const Profile = () => {
       role: user.role || 'Student',
     });
     setProfilePicture(null);
-    setPreviewUrl(user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : '');
+    setPreviewUrl(user.avatar ? `${API_BASE}/uploads/${user.avatar}` : '');
     setEditMode(false);
     setError('');
   };
@@ -210,7 +212,7 @@ const Profile = () => {
                     <p className="text-sm">{error}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setError('')}
                   className="text-red-500 hover:text-red-700"
                   aria-label="Dismiss error"
@@ -232,7 +234,7 @@ const Profile = () => {
                     <p className="text-sm">{success}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSuccess('')}
                   className="text-green-500 hover:text-green-700"
                   aria-label="Dismiss success message"
@@ -257,7 +259,7 @@ const Profile = () => {
                     />
                     {editMode && (
                       <>
-                        <label 
+                        <label
                           className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           htmlFor="avatar-upload"
                         >
@@ -274,7 +276,7 @@ const Profile = () => {
                       </>
                     )}
                   </div>
-                  
+
                   {editMode && user.avatar && !profilePicture && (
                     <button
                       onClick={removeProfilePicture}
@@ -299,7 +301,7 @@ const Profile = () => {
                     <button
                       onClick={() => {
                         setProfilePicture(null);
-                        setPreviewUrl(user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : '');
+                        setPreviewUrl(user.avatar ? `${API_BASE}/uploads/${user.avatar}` : '');
                       }}
                       className="flex items-center justify-center bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-600 w-full"
                     >

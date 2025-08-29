@@ -25,6 +25,8 @@ const RegistrationForm = () => {
     }));
   };
 
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -44,7 +46,7 @@ const RegistrationForm = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/register`, {
+      const response = await fetch(`${API_BASE}/api/users/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

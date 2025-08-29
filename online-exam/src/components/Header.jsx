@@ -38,9 +38,11 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
   const getAvatarSrc = () => {
     if (user?.avatar) {
-      return `http://localhost:5000/uploads/${user.avatar}`;
+      return `${API_BASE}/uploads/${user.avatar}`;
     }
     if (user?.name) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(

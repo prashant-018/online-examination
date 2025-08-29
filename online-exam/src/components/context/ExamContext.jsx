@@ -15,6 +15,9 @@ export const ExamProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // API base URL
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
   // Check authentication status on app load
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,8 +26,7 @@ export const ExamProvider = ({ children }) => {
 
       if (token && storedUser) {
         try {
-          // Local development: call backend directly
-          const verifyUrl = 'http://localhost:5000/api/auth/verify';
+          const verifyUrl = `${API_BASE}/api/auth/verify`;
 
           const response = await fetch(verifyUrl, {
             headers: {
