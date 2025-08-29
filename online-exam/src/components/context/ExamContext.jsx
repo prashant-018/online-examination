@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import API_BASE from '../../config';
 
 const ExamContext = createContext();
 
@@ -16,7 +17,7 @@ export const ExamProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // API base URL
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  // Centralized API base
 
   // Check authentication status on app load
   useEffect(() => {

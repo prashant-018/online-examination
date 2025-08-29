@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_BASE from '../config';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
 
@@ -25,7 +26,7 @@ const RegistrationForm = () => {
     }));
   };
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  // Centralized API base
 
   const handleSubmit = async (e) => {
     e.preventDefault();

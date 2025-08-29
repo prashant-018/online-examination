@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useExamContext } from "./context/ExamContext";
+import API_BASE from '../config';
 import { HiOutlineBars3 } from "react-icons/hi2";
 
 const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
@@ -37,8 +38,6 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
-
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const getAvatarSrc = () => {
     if (user?.avatar) {

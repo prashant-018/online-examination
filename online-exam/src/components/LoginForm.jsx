@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import jwt_decode from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
 import { useExamContext } from './context/ExamContext';
+import API_BASE from '../config';
 
-// ✅ API base (Netlify: set VITE_API_BASE to Render URL)
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 const makeUrl = (path) => `${API_BASE}${path}`;
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||

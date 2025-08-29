@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import API_BASE from '../config';
 import { useExamContext } from './context/ExamContext';
 import { FiEdit, FiSave, FiX, FiUpload, FiUser, FiCamera, FiTrash2 } from 'react-icons/fi';
 
@@ -18,7 +19,7 @@ const Profile = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  // Centralized API base
 
   useEffect(() => {
     if (user) {
