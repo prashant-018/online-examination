@@ -14,33 +14,32 @@ const app = express();
 
 // (Moved) Security middleware will be applied after CORS
 
-// CORS configuration for localhost and production (Netlify)
-const allowedOrigins = new Set([
+// CORS configuration (explicit allowlist)
+const allowedOrigins = [
   'http://localhost:3000',
-  'https://68b1633c0df5fe7bdc19d992--onlineexaam.netlify.app',
-]);
-
-// Allow additional origins via env (comma-separated), e.g. your Render URL
-// Example: CLIENT_URLS="https://online-examination-3-qaq1.onrender.com"
-const extraOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-extraOrigins.forEach(o => allowedOrigins.add(o));
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://onlineexaam.netlify.app',
+  'https://68b17d9752945d379c76270f--onlineexaam.netlify.app'
+];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // e.g. curl, server-to-server
-    if (allowedOrigins.has(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
   optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
+// Ensure preflight responses include CORS headers explicitly
 app.options('*', cors(corsOptions));
 
 // Security middleware (after CORS so headers are not stripped)
@@ -49,13 +48,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Early preflight responder (after headers are set by CORS)
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  return next();
-});
+// Preflight handled by app.options('*', cors(corsOptions)) above
 
 // Simple test route for CORS checks
 app.get('/api/test', (req, res) => {
@@ -142,7 +135,7 @@ app.get('/api/health', (req, res) => {
     message: 'Server is running',
     timestamp: new Date().toISOString(),
     cors: 'Configured for Google OAuth',
-    origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005'],
+    origins: ['http://localhost:3000', 'https://my-netlify-app.netlify.app'],
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
