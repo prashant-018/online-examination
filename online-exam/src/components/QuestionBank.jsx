@@ -22,7 +22,7 @@ const QuestionBank = ({ onSelectQuestions, selectedQuestions = [], examSubject }
   const fetchQuestions = async () => {
     try {
       const token = localStorage.getItem('token');
-      let url = `${import.meta.env.VITE_API_URL}/api/questions`;
+      let url = `/api/questions`;
 
       // Add filters to URL
       const params = new URLSearchParams();

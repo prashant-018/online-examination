@@ -114,7 +114,7 @@ const AddQuestion = ({ examId, onQuestionAdded, onCancel }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions`, {
+      const response = await fetch(`/api/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

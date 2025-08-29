@@ -23,11 +23,14 @@ export const ExamProvider = ({ children }) => {
 
       if (token && storedUser) {
         try {
-          // Verify token with backend
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify`, {
+          // Local development: call backend directly
+          const verifyUrl = 'http://localhost:5000/api/auth/verify';
+
+          const response = await fetch(verifyUrl, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
+            // mode: 'cors' is default for cross-origin; keep it simple
           });
 
           if (response.ok) {
@@ -46,10 +49,8 @@ export const ExamProvider = ({ children }) => {
 
           // Check if it's a connection error
           if (error.message === 'Failed to fetch') {
-            console.error('❌ Server is not running. Please start the backend server first.');
-            console.error('💡 To start the server:');
-            console.error('   1. Double-click start-server.bat in the root directory');
-            console.error('   2. Or run: cd server && npm run dev');
+            console.error('❌ Server is not reachable or CORS blocked.');
+            console.error('💡 For local dev, ensure Vite proxy is configured or enable CORS on the backend.');
           }
 
           localStorage.removeItem('token');

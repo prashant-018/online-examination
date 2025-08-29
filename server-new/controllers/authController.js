@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
 			firstName: firstName || derived.firstName,
 			lastName: lastName || derived.lastName,
 			name,
-			email,
+			email: String(email).toLowerCase(),
 			password,
 			role: role === 'Teacher' ? 'Teacher' : 'Student',
 			google: false,
@@ -64,14 +64,24 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
 	try {
+		// Debug: verify request body is parsed correctly
+		console.log('Login body:', req.body);
 		const { email, password } = req.body;
 		if (!email || !password) {
 			return res.status(400).json({ message: 'Email and password are required' });
 		}
 
-		const user = await User.findOne({ email: String(email).toLowerCase() });
+		let user = await User.findOne({ email: String(email).toLowerCase() });
 		if (!user || !user.password) {
-			return res.status(401).json({ message: 'Invalid credentials' });
+			// Optionally auto-register for local testing when user doesn't exist
+			const allowAutoCreate = process.env.AUTO_REGISTER_ON_LOGIN === 'true' || process.env.NODE_ENV !== 'production';
+			if (allowAutoCreate) {
+				const name = String(email).split('@')[0];
+				user = new User({ name, email: String(email).toLowerCase(), password, role: 'Student' });
+				await user.save();
+			} else {
+				return res.status(401).json({ message: 'Invalid credentials' });
+			}
 		}
 
 		const ok = await user.comparePassword(password);

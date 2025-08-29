@@ -3,18 +3,18 @@ import jwt_decode from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
 import { useExamContext } from './context/ExamContext';
 
-// Use environment variables to configure API base and Google Client ID
-const API_BASE = (import.meta.env.VITE_API_BASE ?? '').trim();
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com";
+// ✅ Local development: call backend directly
+const API_BASE = 'http://localhost:5000';
+const makeUrl = (path) => `${API_BASE}${path}`;
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com";
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const { login } = useExamContext();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,71 +22,55 @@ const LoginForm = () => {
   const handleCallbackResponse = async (response) => {
     try {
       const userObject = jwt_decode(response.credential);
-      console.log("Google User:", userObject);
 
-      // Send Google user data to backend
-      const apiResponse = await fetch(`${API_BASE}/api/auth/google/success`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const apiResponse = await fetch(makeUrl("/api/auth/google/success"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           googleId: userObject.sub,
           name: userObject.name,
           email: userObject.email,
-          avatar: userObject.picture
+          avatar: userObject.picture,
         }),
       });
 
       const data = await apiResponse.json();
+      if (!apiResponse.ok) throw new Error(data.message || "Google login failed");
 
-      if (!apiResponse.ok) {
-        throw new Error(data.message || 'Google login failed');
-      }
-
-      // Use context to login
       login(data.user, data.token);
-      navigate('/home');
+      navigate("/home");
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // ✅ Load Google Sign-In on mount
+  // ✅ Load Google Sign-In
   useEffect(() => {
-    /* global google */
     if (window.google) {
       try {
         google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID, // ✅ Read from env
+          client_id: GOOGLE_CLIENT_ID,
           callback: handleCallbackResponse,
         });
 
-        google.accounts.id.renderButton(document.getElementById("googleSignInDiv"), {
-          theme: "outline",
-          size: "large",
-          width: 300, // ✅ Must be a number between 120-400, not a percentage
-        });
+        google.accounts.id.renderButton(
+          document.getElementById("googleSignInDiv"),
+          { theme: "outline", size: "large", width: 300 }
+        );
       } catch (error) {
-        console.warn('Google OAuth initialization failed:', error);
-        // Hide Google sign-in button if initialization fails
+        console.warn("Google OAuth init failed:", error);
         const googleDiv = document.getElementById("googleSignInDiv");
-        if (googleDiv) {
-          googleDiv.style.display = 'none';
-        }
+        if (googleDiv) googleDiv.style.display = "none";
       }
     }
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Manual form login
+  // ✅ Manual login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -100,22 +84,22 @@ const LoginForm = () => {
 
     const postJson = async (url, body) => {
       const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       let data = null;
-      try { data = await res.json(); } catch { /* ignore non-JSON */ }
+      try {
+        data = await res.json();
+      } catch { }
       return { ok: res.ok, status: res.status, data };
     };
 
     try {
-      // Try preferred route first
-      let result = await postJson(`${API_BASE}/api/auth/login`, formData);
+      let result = await postJson(makeUrl("/api/auth/login"), formData);
 
-      // If route not found, fallback to legacy route
       if (result.status === 404) {
-        result = await postJson(`${API_BASE}/api/users/login`, formData);
+        result = await postJson(makeUrl("/api/users/login"), formData);
       }
 
       if (!result.ok) {
@@ -123,11 +107,13 @@ const LoginForm = () => {
         throw new Error(msg);
       }
 
-      // Use context to login
       login(result.data.user, result.data.token);
-      navigate('/home');
+      navigate("/home");
     } catch (err) {
-      setError(err.message || 'Login failed');
+      if (err?.message === "Failed to fetch") {
+        console.error("❌ Unable to reach backend at", API_BASE || "/api");
+      }
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -175,9 +161,9 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#1658a0] text-[#1658a0] text-white py-2 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#1658a0] text-white py-2 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

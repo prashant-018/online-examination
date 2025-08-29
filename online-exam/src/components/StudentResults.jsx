@@ -17,7 +17,7 @@ const StudentResults = () => {
   const fetchStudentResults = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-results/student`, {
+      const response = await fetch(`/api/exam-results/student`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

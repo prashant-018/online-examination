@@ -47,7 +47,7 @@ const ExamAdd = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/teacher/exams`, {
+      const response = await fetch(`/api/exams/teacher/exams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -90,8 +90,8 @@ const ExamAdd = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingExam
-        ? `${import.meta.env.VITE_API_URL}/api/exams/${editingExam._id}`
-        : `${import.meta.env.VITE_API_URL}/api/exams`;
+        ? `/api/exams/${editingExam._id}`
+        : `/api/exams`;
 
       const method = editingExam ? 'PUT' : 'POST';
 
@@ -152,7 +152,7 @@ const ExamAdd = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}`, {
+      const response = await fetch(`/api/exams/${examId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

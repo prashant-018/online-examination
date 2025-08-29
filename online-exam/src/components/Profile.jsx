@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useExamContext } from './context/ExamContext';
-import { FiEdit, FiSave, FiX, FiUpload, FiUser } from 'react-icons/fi';
+import { FiEdit, FiSave, FiX, FiUpload, FiUser, FiCamera, FiTrash2 } from 'react-icons/fi';
 
 const Profile = () => {
   const { user, updateUser } = useExamContext();
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [updatedUser, setUpdatedUser] = useState({
@@ -15,6 +16,7 @@ const Profile = () => {
   });
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -24,7 +26,7 @@ const Profile = () => {
         role: user.role || 'Student',
       });
       if (user.avatar) {
-        setPreviewUrl(`${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`);
+        setPreviewUrl(`http://localhost:5000/uploads/${user.avatar}?${new Date().getTime()}`);
       }
     }
   }, [user]);
@@ -38,7 +40,7 @@ const Profile = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setError('Please select an image file (JPEG, PNG)');
+        setError('Please select an image file (JPEG, PNG, GIF)');
         return;
       }
 
@@ -48,7 +50,8 @@ const Profile = () => {
       }
 
       setProfilePicture(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
       setError('');
     }
   };
@@ -60,9 +63,9 @@ const Profile = () => {
     formData.append('avatar', profilePicture);
 
     try {
-      setLoading(true);
+      setUploading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile/picture`, {
+      const response = await fetch(`/api/users/profile/picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +89,37 @@ const Profile = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setUploading(false);
+    }
+  };
+
+  const removeProfilePicture = async () => {
+    try {
+      setUploading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/users/profile/picture`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to remove profile picture');
+      }
+
+      const updatedUserData = { ...user, avatar: null };
+      updateUser(updatedUserData);
+      setPreviewUrl('');
+      setSuccess('Profile picture removed successfully!');
+
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -97,7 +130,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
+      const response = await fetch(`/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +166,7 @@ const Profile = () => {
       role: user.role || 'Student',
     });
     setProfilePicture(null);
-    setPreviewUrl(user.avatar ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}` : '');
+    setPreviewUrl(user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : '');
     setEditMode(false);
     setError('');
   };
@@ -166,7 +199,7 @@ const Profile = () => {
           {/* Alert Messages */}
           <div className="px-6 pt-4">
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+              <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded flex justify-between items-center">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -177,11 +210,18 @@ const Profile = () => {
                     <p className="text-sm">{error}</p>
                   </div>
                 </div>
+                <button 
+                  onClick={() => setError('')}
+                  className="text-red-500 hover:text-red-700"
+                  aria-label="Dismiss error"
+                >
+                  <FiX size={18} />
+                </button>
               </div>
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
+              <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 text-green-700 rounded flex justify-between items-center">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -192,6 +232,13 @@ const Profile = () => {
                     <p className="text-sm">{success}</p>
                   </div>
                 </div>
+                <button 
+                  onClick={() => setSuccess('')}
+                  className="text-green-500 hover:text-green-700"
+                  aria-label="Dismiss success message"
+                >
+                  <FiX size={18} />
+                </button>
               </div>
             )}
           </div>
@@ -201,37 +248,68 @@ const Profile = () => {
             <div className="flex flex-col md:flex-row gap-8">
               {/* Avatar Section */}
               <div className="w-full md:w-1/3 flex flex-col items-center">
-                <div className="relative mb-4">
-                  <img
-                    src={previewUrl || getDefaultAvatar()}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-                  />
-                  {editMode && (
-                    <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-blue-700">
-                      <FiUpload className="h-5 w-5" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                      />
-                    </label>
+                <div className="relative mb-4 group">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md relative">
+                    <img
+                      src={previewUrl || getDefaultAvatar()}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                    {editMode && (
+                      <>
+                        <label 
+                          className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          htmlFor="avatar-upload"
+                        >
+                          <FiCamera className="h-6 w-6 text-white" />
+                        </label>
+                        <input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                          ref={fileInputRef}
+                        />
+                      </>
+                    )}
+                  </div>
+                  
+                  {editMode && user.avatar && !profilePicture && (
+                    <button
+                      onClick={removeProfilePicture}
+                      disabled={uploading}
+                      className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600 disabled:opacity-50"
+                      aria-label="Remove profile picture"
+                    >
+                      <FiTrash2 className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
 
                 {editMode && profilePicture && (
-                  <button
-                    onClick={uploadProfilePicture}
-                    disabled={loading}
-                    className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 w-full"
-                  >
-                    {loading ? 'Uploading...' : 'Save Picture'}
-                  </button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <button
+                      onClick={uploadProfilePicture}
+                      disabled={uploading}
+                      className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 w-full"
+                    >
+                      {uploading ? 'Uploading...' : 'Save Picture'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfilePicture(null);
+                        setPreviewUrl(user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : '');
+                      }}
+                      className="flex items-center justify-center bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-600 w-full"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
 
-                <div className="mt-4 text-center">
-                  <h2 className="text-xl font-semibold text-gray-800">
+                <div className="mt-4 text-center w-full">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
                     {editMode ? (
                       <input
                         type="text"
@@ -239,12 +317,13 @@ const Profile = () => {
                         value={updatedUser.name}
                         onChange={handleChange}
                         className="border rounded px-3 py-2 w-full text-center font-semibold"
+                        placeholder="Enter your name"
                       />
                     ) : (
                       updatedUser.name
                     )}
                   </h2>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-gray-600">
                     {editMode ? (
                       <input
                         type="email"
@@ -252,6 +331,7 @@ const Profile = () => {
                         value={updatedUser.email}
                         onChange={handleChange}
                         className="border rounded px-3 py-2 w-full text-center"
+                        placeholder="Enter your email"
                       />
                     ) : (
                       updatedUser.email
@@ -264,9 +344,9 @@ const Profile = () => {
               <div className="w-full md:w-2/3">
                 <div className="space-y-6">
                   <div className="border-b pb-4">
-                    <h3 className="text-lg font-medium text-gray-900">Account Information</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
                     <div className="mt-4 space-y-4">
-                      <div className="flex items-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
                         <span className="w-1/3 text-gray-600">Role:</span>
                         {editMode ? (
                           <select
@@ -283,12 +363,18 @@ const Profile = () => {
                           <span className="flex-1 font-medium">{updatedUser.role}</span>
                         )}
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
                         <span className="w-1/3 text-gray-600">Status:</span>
                         <span className="flex-1">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Active
                           </span>
+                        </span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
+                        <span className="w-1/3 text-gray-600">Member since:</span>
+                        <span className="flex-1 text-gray-800">
+                          {new Date(user.createdAt || Date.now()).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -298,12 +384,12 @@ const Profile = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-8 flex justify-end space-x-3">
+                <div className="mt-8 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
                   {editMode ? (
                     <>
                       <button
                         onClick={handleCancel}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         <FiX className="mr-2" />
                         Cancel
@@ -311,7 +397,7 @@ const Profile = () => {
                       <button
                         onClick={handleSave}
                         disabled={loading}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         <FiSave className="mr-2" />
                         {loading ? 'Saving...' : 'Save Changes'}
@@ -320,7 +406,7 @@ const Profile = () => {
                   ) : (
                     <button
                       onClick={() => setEditMode(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white  bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       <FiEdit className="mr-2" />
                       Edit Profile

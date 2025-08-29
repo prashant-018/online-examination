@@ -88,7 +88,7 @@ const ExamQuestionManager = () => {
       const token = localStorage.getItem('token');
 
       // Fetch exam details
-      const examResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}`, {
+      const examResponse = await fetch(`/api/exams/${examId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -100,7 +100,7 @@ const ExamQuestionManager = () => {
       setExam(examData);
 
       // Fetch questions for this exam
-      const questionsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}/questions`, {
+      const questionsResponse = await fetch(`/api/exams/${examId}/questions`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -228,8 +228,8 @@ const ExamQuestionManager = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingQuestion
-        ? `${import.meta.env.VITE_API_URL}/api/questions/${editingQuestion._id}`
-        : `${import.meta.env.VITE_API_URL}/api/questions`;
+        ? `/api/questions/${editingQuestion._id}`
+        : `/api/questions`;
 
       const method = editingQuestion ? 'PUT' : 'POST';
       const body = {
@@ -299,7 +299,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions/${questionId}`, {
+      const response = await fetch(`/api/questions/${questionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -327,7 +327,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}/questions/reorder`, {
+      const response = await fetch(`/api/exams/${examId}/questions/reorder`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -407,7 +407,7 @@ const ExamQuestionManager = () => {
       }
 
       // Use bulk create endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions/bulk`, {
+      const response = await fetch(`/api/questions/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -444,7 +444,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}/questions`, {
+      const response = await fetch(`/api/exams/${examId}/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -483,7 +483,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}/questions`, {
+      const response = await fetch(`/api/exams/${examId}/questions`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -574,7 +574,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions/${quickEditQuestion._id}`, {
+      const response = await fetch(`/api/questions/${quickEditQuestion._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

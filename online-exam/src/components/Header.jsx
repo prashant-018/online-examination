@@ -40,7 +40,7 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
 
   const getAvatarSrc = () => {
     if (user?.avatar) {
-      return `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`;
+      return `http://localhost:5000/uploads/${user.avatar}`;
     }
     if (user?.name) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(

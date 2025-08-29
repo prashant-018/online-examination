@@ -78,7 +78,7 @@ const ExamAttempt = () => {
   const fetchExam = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examId}`, {
+      const response = await fetch(`/api/exams/${examId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -191,7 +191,7 @@ const ExamAttempt = () => {
 
       // Save exam result
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-results`, {
+      const response = await fetch(`/api/exam-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

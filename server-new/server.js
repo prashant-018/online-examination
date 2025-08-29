@@ -12,23 +12,52 @@ const envResult = dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
-// Security middleware
+// (Moved) Security middleware will be applied after CORS
+
+// CORS configuration for local development (Vite and CRA)
+// Allows http://localhost:3000 and http://localhost:5173 by default,
+// and optionally any additional origins from CLIENT_URLS (comma-separated) or CLIENT_URL.
+const defaultAllowed = new Set(['http://localhost:3000', 'http://localhost:5173']);
+const extraOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+extraOrigins.forEach(o => defaultAllowed.add(o));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // non-browser requests
+    if (defaultAllowed.has(origin)) return callback(null, true);
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true); // any localhost port
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Security middleware (after CORS so headers are not stripped)
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration
-app.use(cors({
-  origin: [
-    "https://onlineexaam.netlify.app",            // Production Netlify domain
-    "https://68ac4dce573770e95de928f8--onlineexaam.netlify.app", // Preview deploy link
-    "http://localhost:5173",                      // Local development (Vite default)
-    "http://localhost:3000"                       // Local development (your current dev port)
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+// Early preflight responder (after headers are set by CORS)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  return next();
+});
+
+// Simple test route for CORS checks
+app.get('/api/test', (req, res) => {
+  res.json({ ok: true, message: 'CORS test success' });
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -68,7 +97,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// MongoDB Connection
+// MongoDB Connection (from .env MONGO_URI)
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/online_exam';
@@ -79,7 +108,6 @@ const connectDB = async () => {
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
-    console.log('⚠️ Running without database - using mock data');
   }
 };
 
@@ -126,6 +154,21 @@ app.use('/api/exams', examRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/exam-results', examResultRoutes);
 app.use('/api/auth/google', googleAuthRoutes);
+
+// Auth verify route for testing (uses existing token if provided)
+app.get('/api/auth/verify', async (req, res) => {
+  try {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
+    const user = await require('./models/User').findById(payload.userId).select('-password').lean();
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+    return res.json({ user, ok: true });
+  } catch (e) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+});
 
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com';
@@ -193,7 +236,7 @@ app.post('/api/auth/google/success', async (req, res) => {
 
     if (!user) {
       // Check if user exists with email
-      user = await User.findOne({ email });
+      user = await User.findOne({ email: String(email).toLowerCase() });
 
       if (user) {
         // Link existing account with Google
@@ -205,7 +248,7 @@ app.post('/api/auth/google/success', async (req, res) => {
         // Create new user
         user = new User({
           name: name || 'Google User',
-          email,
+          email: String(email).toLowerCase(),
           googleId,
           avatar,
           isEmailVerified: true,
@@ -219,9 +262,9 @@ app.post('/api/auth/google/success', async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate JWT token
+    // Generate JWT token (align payload with auth middleware expectations)
     const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email },
+      { userId: user._id, role: user.role, email: user.email },
       process.env.JWT_SECRET || 'dev-secret',
       { expiresIn: '7d' }
     );
@@ -355,37 +398,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        message: 'Email and password are required',
-        code: 'MISSING_CREDENTIALS'
-      });
-    }
-
-    res.json({
-      message: 'Login successful',
-      code: 'LOGIN_SUCCESS',
-      token: 'mock-jwt-token',
-      user: {
-        id: 'mock-user-id',
-        name: 'Test User',
-        email,
-        role: 'Student',
-        isVerified: true
-      },
-      expiresIn: 3600
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Login failed',
-      code: 'LOGIN_ERROR'
-    });
-  }
-});
+// Real auth routes are handled by routes/authRoutes -> controllers/authController
 
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -433,9 +446,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-// Prefer PORT from server-new/.env when present (useful for local dev),
-// otherwise fall back to any shell/host-provided PORT, then 5000.
-const PORT = (envResult && envResult.parsed && envResult.parsed.PORT) || process.env.PORT || 5000;
+// Use PORT from .env (default 5000) for local development
+const PORT = process.env.PORT || (envResult && envResult.parsed && envResult.parsed.PORT) || 5000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔒 CORS enabled for Google OAuth`);

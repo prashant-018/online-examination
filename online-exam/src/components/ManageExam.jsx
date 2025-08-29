@@ -24,7 +24,7 @@ const ManageExam = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/exams`, {
+      const res = await fetch(`/api/exams`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch exams');
@@ -44,7 +44,7 @@ const ManageExam = () => {
     if (!examToDelete) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/exams/${examToDelete._id}`, {
+      const res = await fetch(`/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
