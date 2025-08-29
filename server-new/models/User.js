@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema({
   lockUntil: Date
 }, { timestamps: true });
 
-// Index for OAuth
-userSchema.index({ googleId: 1 });
+// Define a single schema-level index for googleId to avoid duplicates
+userSchema.index({ googleId: 1 }, { sparse: true });
 
 // Virtual for account lock status
 userSchema.virtual('isLocked').get(function () {

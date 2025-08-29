@@ -101,10 +101,7 @@ app.use((req, res, next) => {
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/online_exam';
-    await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(mongoURI);
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
@@ -445,20 +442,39 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-// Use PORT from .env (default 5000) for local development
-const PORT = process.env.PORT || (envResult && envResult.parsed && envResult.parsed.PORT) || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔒 CORS enabled for Google OAuth`);
-  console.log(`🛡️ Security headers configured`);
-  console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔑 Google OAuth: http://localhost:${PORT}/api/auth/google`);
-  console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
-  console.log(`📁 Uploads: http://localhost:${PORT}/uploads`);
-});
+// Start server with dynamic port and fallback
+const DEFAULT_PORT = process.env.PORT || 5000;
+let server;
 
-// Connect to database
+function startServer(port) {
+  server = app
+    .listen(port, () => {
+      console.log(`🚀 Server running on port ${port}`);
+      console.log(`🔒 CORS enabled for Google OAuth`);
+      console.log(`🛡️ Security headers configured`);
+      console.log(`📡 Health check: http://localhost:${port}/api/health`);
+      console.log(`🔑 Google OAuth: http://localhost:${port}/api/auth/google`);
+      console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
+      console.log(`📁 Uploads: http://localhost:${port}/uploads`);
+    })
+    .on('error', (err) => {
+      if (err.code === 'EADDRINUSE' && String(port) === '5000') {
+        const fallback = 5001;
+        console.warn(`⚠️  Port ${port} in use, retrying on ${fallback}...`);
+        startServer(fallback);
+      } else if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${port} is already in use and no fallback configured.`);
+        process.exit(1);
+      } else {
+        console.error('❌ Server start error:', err);
+        process.exit(1);
+      }
+    });
+}
+
+startServer(DEFAULT_PORT);
+
+// Connect to database (logs success inside connectDB)
 connectDB();
 
 // Graceful shutdown
