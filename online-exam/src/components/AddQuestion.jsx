@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useExamContext } from './context/ExamContext';
+import API_BASE from '../config';
 
 const AddQuestion = ({ examId, onQuestionAdded, onCancel }) => {
   const { user } = useExamContext();
@@ -114,7 +115,7 @@ const AddQuestion = ({ examId, onQuestionAdded, onCancel }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/questions`, {
+      const response = await fetch(`${API_BASE}/api/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

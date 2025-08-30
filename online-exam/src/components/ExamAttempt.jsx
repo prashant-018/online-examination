@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
+import API_BASE from '../config';
 
 const ExamAttempt = () => {
   const { examId } = useParams();
@@ -78,7 +79,7 @@ const ExamAttempt = () => {
   const fetchExam = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exams/${examId}`, {
+      const response = await fetch(`${API_BASE}/api/exams/${examId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -191,7 +192,7 @@ const ExamAttempt = () => {
 
       // Save exam result
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exam-results`, {
+      const response = await fetch(`${API_BASE}/api/exam-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

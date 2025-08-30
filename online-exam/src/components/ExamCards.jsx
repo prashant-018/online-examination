@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
+import API_BASE from '../config';
 
 const ExamCards = () => {
   const navigate = useNavigate();
@@ -22,11 +23,21 @@ const ExamCards = () => {
   const fetchExams = async () => {
     try {
       setLoading(true);
+      setError('');
+
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exams`, {
+
+      if (!token) {
+        throw new Error('Authentication required. Please login again.');
+      }
+
+      const response = await fetch(`${API_BASE}/api/exams`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -35,11 +46,17 @@ const ExamCards = () => {
           ? data
           : (Array.isArray(data?.exams) ? data.exams : []);
         setExams(normalized);
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      } else if (response.status === 403) {
+        throw new Error('Access denied. You do not have permission to view exams.');
       } else {
-        throw new Error('Failed to fetch exams');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch exams (${response.status})`);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch exams error:', err);
+      setError(err.message || 'Failed to load exams. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -94,22 +111,35 @@ const ExamCards = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exams/${examToDelete._id}`, {
+
+      if (!token) {
+        throw new Error('Authentication required. Please login again.');
+      }
+
+      const response = await fetch(`${API_BASE}/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (response.ok) {
         setExams(exams.filter(exam => exam._id !== examToDelete._id));
         setShowDeleteModal(false);
         setExamToDelete(null);
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      } else if (response.status === 403) {
+        throw new Error('Access denied. You do not have permission to delete this exam.');
       } else {
-        throw new Error('Failed to delete exam');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete exam (${response.status})`);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Delete exam error:', err);
+      setError(err.message || 'Failed to delete exam. Please try again.');
     }
   };
 

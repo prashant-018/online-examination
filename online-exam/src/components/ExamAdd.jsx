@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useExamContext } from './context/ExamContext';
 import { useNavigate } from 'react-router-dom';
+import API_BASE from '../config';
 
 const ExamAdd = () => {
   const { user } = useExamContext();
@@ -47,7 +48,7 @@ const ExamAdd = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exams/teacher/exams`, {
+      const response = await fetch(`${API_BASE}/api/exams/teacher/exams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -90,8 +91,8 @@ const ExamAdd = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingExam
-        ? `/api/exams/${editingExam._id}`
-        : `/api/exams`;
+        ? `${API_BASE}/api/exams/${editingExam._id}`
+        : `${API_BASE}/api/exams`;
 
       const method = editingExam ? 'PUT' : 'POST';
 
