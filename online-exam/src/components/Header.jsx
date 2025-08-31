@@ -152,8 +152,8 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={() => handleNavClick("/home")}
           className={`pb-1.5 transition-colors ${isActive("/home")
-              ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
-              : "text-gray-600 hover:text-blue-600"
+            ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
+            : "text-gray-600 hover:text-blue-600"
             }`}
         >
           HOME
@@ -161,8 +161,8 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={() => handleNavClick("/services")}
           className={`pb-1.5 transition-colors ${isActive("/services")
-              ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
-              : "text-gray-600 hover:text-blue-600"
+            ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
+            : "text-gray-600 hover:text-blue-600"
             }`}
         >
           SERVICES
@@ -170,8 +170,8 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={() => handleNavClick("/about")}
           className={`pb-1.5 transition-colors ${isActive("/about")
-              ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
-              : "text-gray-600 hover:text-blue-600"
+            ? "text-blue-700 border-b-2 border-blue-700 font-semibold"
+            : "text-gray-600 hover:text-blue-600"
             }`}
         >
           ABOUT US

@@ -101,8 +101,8 @@ const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
       {/* Main Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg'
-            : 'bg-white'
+          ? 'bg-white/95 backdrop-blur-md shadow-lg'
+          : 'bg-white'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -139,8 +139,8 @@ const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
                     key={link.path}
                     onClick={() => handleNavClick(link.path)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-all duration-200 ${isActive(link.path)
-                        ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                      ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                      : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                       }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -279,8 +279,8 @@ const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
                 key={link.path}
                 onClick={() => handleNavClick(link.path)}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${isActive(link.path)
-                    ? 'bg-white/20 text-white'
-                    : 'text-blue-100 hover:bg-white/10'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-100 hover:bg-white/10'
                   }`}
               >
                 <Icon className="w-5 h-5" />
