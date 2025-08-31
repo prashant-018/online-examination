@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import API_BASE from '../../config';
+import config from '../../config';
 
 const ExamContext = createContext();
 
@@ -27,7 +27,7 @@ export const ExamProvider = ({ children }) => {
 
       if (token && storedUser) {
         try {
-          const verifyUrl = `${API_BASE}/api/auth/verify`;
+          const verifyUrl = `${config.API_BASE}/api/auth/verify`;
 
           const response = await fetch(verifyUrl, {
             headers: {

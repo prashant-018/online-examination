@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import API_BASE from '../config';
+import config from '../config';
 import { useExamContext } from './context/ExamContext';
 import { FiEdit, FiSave, FiX, FiUpload, FiUser, FiCamera, FiTrash2 } from 'react-icons/fi';
 
@@ -29,7 +29,7 @@ const Profile = () => {
         role: user.role || 'Student',
       });
       if (user.avatar) {
-        setPreviewUrl(`${API_BASE}/uploads/${user.avatar}?${new Date().getTime()}`);
+        setPreviewUrl(`${config.API_BASE}/uploads/${user.avatar}?${new Date().getTime()}`);
       }
     }
   }, [user]);
@@ -68,7 +68,7 @@ const Profile = () => {
     try {
       setUploading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/users/profile/picture`, {
+      const response = await fetch(`${config.API_BASE}/api/users/profile/picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -100,7 +100,7 @@ const Profile = () => {
     try {
       setUploading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/users/profile/picture`, {
+      const response = await fetch(`${config.API_BASE}/api/users/profile/picture`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -133,7 +133,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/users/profile`, {
+      const response = await fetch(`${config.API_BASE}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ const Profile = () => {
       role: user.role || 'Student',
     });
     setProfilePicture(null);
-    setPreviewUrl(user.avatar ? `${API_BASE}/uploads/${user.avatar}` : '');
+    setPreviewUrl(user.avatar ? `${config.API_BASE}/uploads/${user.avatar}` : '');
     setEditMode(false);
     setError('');
   };
@@ -302,7 +302,7 @@ const Profile = () => {
                     <button
                       onClick={() => {
                         setProfilePicture(null);
-                        setPreviewUrl(user.avatar ? `${API_BASE}/uploads/${user.avatar}` : '');
+                        setPreviewUrl(user.avatar ? `${config.API_BASE}/uploads/${user.avatar}` : '');
                       }}
                       className="flex items-center justify-center bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-600 w-full"
                     >

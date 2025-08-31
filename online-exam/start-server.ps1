@@ -19,7 +19,7 @@ Write-Host "MONGO_URI: $env:MONGO_URI"
 Write-Host ""
 
 # Navigate to server directory
-Set-Location -Path "server"
+Set-Location -Path "server-new"
 
 # Check if node_modules exists
 if (-not (Test-Path "node_modules")) {

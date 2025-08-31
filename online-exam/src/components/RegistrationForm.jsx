@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import API_BASE from '../config';
+import config from '../config';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
 
@@ -26,6 +26,20 @@ const RegistrationForm = () => {
     }));
   };
 
+  // ✅ Continue as Guest function
+  const handleContinueAsGuest = () => {
+    const guestUser = {
+      username: "Guest",
+      email: "guest@example.com",
+      role: "guest",
+      name: "Guest User"
+    };
+    const guestToken = "guest-token-123";
+
+    login(guestUser, guestToken);
+    navigate("/dashboard");
+  };
+
   // Centralized API base
 
   const handleSubmit = async (e) => {
@@ -47,7 +61,7 @@ const RegistrationForm = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/register`, {
+      const response = await fetch(`${config.API_BASE}/api/users/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,6 +174,16 @@ const RegistrationForm = () => {
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
+
+        {/* Continue as Guest Button */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={handleContinueAsGuest}
+            className="w-full bg-gray-500 text-white py-2 rounded-full font-semibold hover:bg-gray-600 transition-colors"
+          >
+            Continue as Guest
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
 import QuestionBank from './QuestionBank';
-import API_BASE from '../config';
+import config from '../config';
 
 const ExamQuestionManager = () => {
   const { examId } = useParams();
@@ -89,7 +89,7 @@ const ExamQuestionManager = () => {
       const token = localStorage.getItem('token');
 
       // Fetch exam details
-      const examResponse = await fetch(`${API_BASE}/api/exams/${examId}`, {
+      const examResponse = await fetch(`${config.API_BASE}/api/exams/${examId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -101,7 +101,7 @@ const ExamQuestionManager = () => {
       setExam(examData);
 
       // Fetch questions for this exam
-      const questionsResponse = await fetch(`${API_BASE}/api/exams/${examId}/questions`, {
+      const questionsResponse = await fetch(`${config.API_BASE}/api/exams/${examId}/questions`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -229,8 +229,8 @@ const ExamQuestionManager = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingQuestion
-        ? `/api/questions/${editingQuestion._id}`
-        : `/api/questions`;
+        ? `${config.API_BASE}/api/questions/${editingQuestion._id}`
+        : `${config.API_BASE}/api/questions`;
 
       const method = editingQuestion ? 'PUT' : 'POST';
       const body = {
@@ -300,7 +300,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/questions/${questionId}`, {
+      const response = await fetch(`${config.API_BASE}/api/questions/${questionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -328,7 +328,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/exams/${examId}/questions/reorder`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/${examId}/questions/reorder`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -408,7 +408,7 @@ const ExamQuestionManager = () => {
       }
 
       // Use bulk create endpoint
-      const response = await fetch(`${API_BASE}/api/questions/bulk`, {
+      const response = await fetch(`${config.API_BASE}/api/questions/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -445,7 +445,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/exams/${examId}/questions`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/${examId}/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -484,7 +484,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/exams/${examId}/questions`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/${examId}/questions`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -575,7 +575,7 @@ const ExamQuestionManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/questions/${quickEditQuestion._id}`, {
+      const response = await fetch(`${config.API_BASE}/api/questions/${quickEditQuestion._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

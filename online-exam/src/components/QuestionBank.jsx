@@ -22,7 +22,7 @@ const QuestionBank = ({ onSelectQuestions, selectedQuestions = [], examSubject }
   const fetchQuestions = async () => {
     try {
       const token = localStorage.getItem('token');
-      let url = `/api/questions`;
+      let url = `${config.API_BASE}/api/questions`;
 
       // Add filters to URL
       const params = new URLSearchParams();

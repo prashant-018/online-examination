@@ -14,19 +14,39 @@ const app = express();
 
 // ------------------- CORS CONFIG -------------------
 const allowedOrigins = [
+  'http://localhost:3000',
   'http://localhost:5173',
+  'http://localhost:5174', // Handle port conflicts
   'http://localhost:5175',
-  'https://onlineexaam.netlify.app'
+  'https://onlineexaam.netlify.app',
+  'https://online-examination-4-nqz9.onrender.com'
 ];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+
+  // Allow requests with no origin (like Postman/curl)
+  if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  // Allow specific origins
+  else if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
+  // Allow Netlify preview domains (pattern: https://xxxx--onlineexaam.netlify.app)
+  else if (origin.match(/^https:\/\/.*--onlineexaam\.netlify\.app$/)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
@@ -106,6 +126,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     cors: 'Configured',
     origins: allowedOrigins,
+    netlifyPreview: 'Supports https://xxxx--onlineexaam.netlify.app pattern',
+    noOrigin: 'Supports requests with no origin (Postman/curl)',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
@@ -193,6 +215,8 @@ let server;
       console.log(`🚀 Server running on port ${freePort}`);
       console.log(`📡 Health check: http://localhost:${freePort}/api/health`);
       console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
+      console.log(`🔗 Netlify preview domains: https://xxxx--onlineexaam.netlify.app`);
+      console.log(`🔧 No-origin requests: Supported (Postman/curl)`);
     });
     server.on('error', (err) => {
       console.error('❌ Server start error:', err);

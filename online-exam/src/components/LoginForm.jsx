@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import jwt_decode from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
 import { useExamContext } from './context/ExamContext';
-import API_BASE from '../config';
+import config from '../config';
 
-const makeUrl = (path) => `${API_BASE}${path}`;
+const makeUrl = (path) => `${config.API_BASE}${path}`;
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
   "123243172421-28rsh7uj9gjiiimsa0r55tcjgc0qq2if.apps.googleusercontent.com";
@@ -16,6 +16,20 @@ const LoginForm = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ Continue as Guest function
+  const handleContinueAsGuest = () => {
+    const guestUser = {
+      username: "Guest",
+      email: "guest@example.com",
+      role: "guest",
+      name: "Guest User"
+    };
+    const guestToken = "guest-token-123";
+
+    login(guestUser, guestToken);
+    navigate("/dashboard");
+  };
 
   // ✅ Google login callback
   const handleCallbackResponse = async (response) => {
@@ -111,7 +125,7 @@ const LoginForm = () => {
       navigate("/home");
     } catch (err) {
       if (err?.message === "Failed to fetch") {
-        console.error("❌ Unable to reach backend at", API_BASE || "/api");
+        console.error("❌ Unable to reach backend at", config.API_BASE || "/api");
       }
       setError(err.message || "Login failed");
     } finally {
@@ -170,6 +184,16 @@ const LoginForm = () => {
         <div className="mt-6 text-center">
           <div className="mb-2 text-gray-500">OR</div>
           <div id="googleSignInDiv" className="flex justify-center" />
+        </div>
+
+        {/* Continue as Guest Button */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={handleContinueAsGuest}
+            className="w-full bg-gray-500 text-white py-2 rounded-full font-semibold hover:bg-gray-600 transition-colors"
+          >
+            Continue as Guest
+          </button>
         </div>
       </div>
     </div>

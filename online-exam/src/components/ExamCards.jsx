@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
-import API_BASE from '../config';
+import config from '../config';
 
 const ExamCards = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const ExamCards = () => {
         throw new Error('Authentication required. Please login again.');
       }
 
-      const response = await fetch(`${API_BASE}/api/exams`, {
+      const response = await fetch(`${config.API_BASE}/api/exams`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -116,7 +116,7 @@ const ExamCards = () => {
         throw new Error('Authentication required. Please login again.');
       }
 
-      const response = await fetch(`${API_BASE}/api/exams/${examToDelete._id}`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

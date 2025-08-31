@@ -98,7 +98,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 1. Start the backend server first (using any of the methods above)
 2. Start the frontend development server
 3. Both should be running simultaneously:
-   - Backend: `http://localhost:5000`
+       - Backend: `http://localhost:5000`
    - Frontend: `http://localhost:5173`
 
 ## Production Deployment

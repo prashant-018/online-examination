@@ -19,7 +19,7 @@ echo MONGO_URI=%MONGO_URI%
 echo.
 
 REM Navigate to server directory
-cd server
+cd server-new
 
 REM Check if node_modules exists
 if not exist "node_modules" (

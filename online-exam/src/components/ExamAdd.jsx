@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useExamContext } from './context/ExamContext';
 import { useNavigate } from 'react-router-dom';
-import API_BASE from '../config';
+import config from '../config';
 
 const ExamAdd = () => {
   const { user } = useExamContext();
@@ -48,7 +48,7 @@ const ExamAdd = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/exams/teacher/exams`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/teacher/exams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -91,8 +91,8 @@ const ExamAdd = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingExam
-        ? `${API_BASE}/api/exams/${editingExam._id}`
-        : `${API_BASE}/api/exams`;
+        ? `${config.API_BASE}/api/exams/${editingExam._id}`
+        : `${config.API_BASE}/api/exams`;
 
       const method = editingExam ? 'PUT' : 'POST';
 
@@ -153,7 +153,7 @@ const ExamAdd = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/exams/${examId}`, {
+      const response = await fetch(`${config.API_BASE}/api/exams/${examId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

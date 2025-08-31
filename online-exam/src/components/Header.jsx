@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useExamContext } from "./context/ExamContext";
-import API_BASE from '../config';
+import config from '../config';
 import { HiOutlineBars3 } from "react-icons/hi2";
 
 const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
@@ -41,7 +41,7 @@ const Header = ({ user, isSidebarOpen, onToggleSidebar }) => {
 
   const getAvatarSrc = () => {
     if (user?.avatar) {
-      return `${API_BASE}/uploads/${user.avatar}`;
+      return `${config.API_BASE}/uploads/${user.avatar}`;
     }
     if (user?.name) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(

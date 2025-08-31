@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
 import { FiSearch, FiPlus, FiEdit, FiEye, FiTrash2, FiFilter, FiCalendar, FiClock, FiBook } from 'react-icons/fi';
-import API_BASE from '../config';
+import config from '../config';
 
 const ManageExam = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const ManageExam = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/exams`, {
+      const res = await fetch(`${config.API_BASE}/api/exams`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch exams');
@@ -45,7 +45,7 @@ const ManageExam = () => {
     if (!examToDelete) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/exams/${examToDelete._id}`, {
+      const res = await fetch(`${config.API_BASE}/api/exams/${examToDelete._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

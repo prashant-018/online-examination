@@ -84,6 +84,14 @@ const AppContent = () => {
             }
           />
 
+          {/* Dashboard route - redirects to home */}
+          <Route
+            path="/dashboard"
+            element={
+              isAuthenticated ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />
+            }
+          />
+
           {/* Protected Routes */}
           <Route
             path="/home"

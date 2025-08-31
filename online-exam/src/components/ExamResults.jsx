@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useExamContext } from './context/ExamContext';
-import API_BASE from '../config';
+import config from '../config';
 
 const ExamResults = () => {
   const { examId } = useParams();
@@ -14,7 +14,7 @@ const ExamResults = () => {
     const fetchResults = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE}/api/exam-results/exam/${examId}`, {
+        const res = await fetch(`${config.API_BASE}/api/exam-results/exam/${examId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
