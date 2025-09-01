@@ -27,6 +27,8 @@ const ExamAdd = () => {
     allowedRoles: ['Student']
   });
 
+  const [formErrors, setFormErrors] = useState({});
+
   const subjects = [
     'Mathematics',
     'Computer Science',
@@ -67,8 +69,36 @@ const ExamAdd = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title.trim()) errors.title = 'Title is required';
+    if (!formData.subject) errors.subject = 'Subject is required';
+    if (!formData.description.trim()) errors.description = 'Description is required';
+    if (formData.duration < 1) errors.duration = 'Duration must be at least 1 minute';
+    if (formData.totalMarks < 1) errors.totalMarks = 'Total marks must be at least 1';
+    if (formData.passingMarks < 1 || formData.passingMarks > formData.totalMarks) {
+      errors.passingMarks = `Passing marks must be between 1 and ${formData.totalMarks}`;
+    }
+    if (!formData.startTime) errors.startTime = 'Start time is required';
+    if (!formData.endTime) errors.endTime = 'End time is required';
+    if (new Date(formData.startTime) >= new Date(formData.endTime)) {
+      errors.endTime = 'End time must be after start time';
+    }
+    if (formData.maxAttempts < 1) errors.maxAttempts = 'Maximum attempts must be at least 1';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    
+    // Clear error when field is edited
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
     if (type === 'number') {
       setFormData(prev => ({
         ...prev,
@@ -84,6 +114,11 @@ const ExamAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     setError('');
     setSuccess('');
@@ -144,6 +179,7 @@ const ExamAdd = () => {
       allowedRoles: exam.allowedRoles
     });
     setShowForm(true);
+    setFormErrors({});
   };
 
   const handleDelete = async (examId) => {
@@ -187,6 +223,7 @@ const ExamAdd = () => {
       instructions: '',
       allowedRoles: ['Student']
     });
+    setFormErrors({});
   };
 
   const cancelForm = () => {
@@ -212,7 +249,7 @@ const ExamAdd = () => {
 
   if (user?.role !== 'Teacher') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center p-8 bg-white rounded-xl shadow-md max-w-md w-full">
           <div className="text-6xl mb-4">🚫</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Restricted</h1>
@@ -303,8 +340,13 @@ const ExamAdd = () => {
                         value={formData.title}
                         onChange={handleChange}
                         required
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.title ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.title && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.title}</p>
+                      )}
                     </div>
                   </div>
 
@@ -319,13 +361,18 @@ const ExamAdd = () => {
                         value={formData.subject}
                         onChange={handleChange}
                         required
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.subject ? 'border-red-300' : ''
+                        }`}
                       >
                         <option value="">Select a subject</option>
                         {subjects.map((subject) => (
                           <option key={subject} value={subject}>{subject}</option>
                         ))}
                       </select>
+                      {formErrors.subject && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.subject}</p>
+                      )}
                     </div>
                   </div>
 
@@ -342,8 +389,13 @@ const ExamAdd = () => {
                         onChange={handleChange}
                         required
                         min="1"
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.duration ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.duration && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.duration}</p>
+                      )}
                     </div>
                   </div>
 
@@ -360,8 +412,13 @@ const ExamAdd = () => {
                         onChange={handleChange}
                         required
                         min="1"
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.totalMarks ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.totalMarks && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.totalMarks}</p>
+                      )}
                     </div>
                   </div>
 
@@ -379,8 +436,13 @@ const ExamAdd = () => {
                         required
                         min="1"
                         max={formData.totalMarks}
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.passingMarks ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.passingMarks && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.passingMarks}</p>
+                      )}
                     </div>
                   </div>
 
@@ -396,8 +458,13 @@ const ExamAdd = () => {
                         value={formData.maxAttempts}
                         onChange={handleChange}
                         min="1"
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.maxAttempts ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.maxAttempts && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.maxAttempts}</p>
+                      )}
                     </div>
                   </div>
 
@@ -413,8 +480,13 @@ const ExamAdd = () => {
                         value={formData.startTime}
                         onChange={handleChange}
                         required
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.startTime ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.startTime && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.startTime}</p>
+                      )}
                     </div>
                   </div>
 
@@ -430,8 +502,13 @@ const ExamAdd = () => {
                         value={formData.endTime}
                         onChange={handleChange}
                         required
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.endTime ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.endTime && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.endTime}</p>
+                      )}
                     </div>
                   </div>
 
@@ -447,8 +524,13 @@ const ExamAdd = () => {
                         value={formData.description}
                         onChange={handleChange}
                         required
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                          formErrors.description ? 'border-red-300' : ''
+                        }`}
                       />
+                      {formErrors.description && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.description}</p>
+                      )}
                     </div>
                   </div>
 
@@ -582,7 +664,7 @@ const ExamAdd = () => {
                             </p>
                             <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                               <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
                               </svg>
                               {exam.subject}
                             </p>

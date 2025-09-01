@@ -27,6 +27,8 @@ const ExamQuestionManager = () => {
   const [showQuickEdit, setShowQuickEdit] = useState(false);
   const [quickEditQuestion, setQuickEditQuestion] = useState(null);
   const [quickEditAnswer, setQuickEditAnswer] = useState('');
+  const [activeTab, setActiveTab] = useState('questions'); // 'questions', 'stats', 'actions'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Form state for adding/editing questions
   const [questionForm, setQuestionForm] = useState({
@@ -623,11 +625,17 @@ const ExamQuestionManager = () => {
 
   if (user?.role !== 'Teacher') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
           <div className="text-6xl mb-4">🚫</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Access Denied</h1>
-          <p className="text-gray-600">Only teachers can manage exam questions.</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-6">Only teachers can manage exam questions.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -635,7 +643,7 @@ const ExamQuestionManager = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading exam questions...</p>
@@ -644,16 +652,16 @@ const ExamQuestionManager = () => {
     );
   }
 
-  if (error) {
+  if (error && !exam) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Error Loading Questions</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Questions</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={fetchExamAndQuestions}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition"
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             Try Again
           </button>
@@ -664,840 +672,914 @@ const ExamQuestionManager = () => {
 
   const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
 
-  return (
-    <div className="max-w-6xl mx-auto mt-8 px-6 py-8">
-      {/* Header */}
-      <div className="mb-8">
+  // Mobile menu component
+  const MobileMenu = () => (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 p-2">
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          onClick={() => setActiveTab('questions')}
+          className={`flex flex-col items-center p-2 rounded-lg ${activeTab === 'questions' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
+        >
+          <span className="text-lg">📝</span>
+          <span className="text-xs">Questions</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('stats')}
+          className={`flex flex-col items-center p-2 rounded-lg ${activeTab === 'stats' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
+        >
+          <span className="text-lg">📊</span>
+          <span className="text-xs">Stats</span>
+        </button>
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center p-2 rounded-lg text-gray-600"
+        >
+          <span className="text-lg">⚙️</span>
+          <span className="text-xs">Actions</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Mobile actions menu
+  const MobileActionsMenu = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:hidden">
+      <div className="bg-white rounded-t-2xl w-full p-4">
         <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-blue-800 mb-2">📝 Question Manager</h1>
-            {exam && (
-              <div className="text-gray-600">
-                <p className="text-lg">{exam.title}</p>
-                <p className="text-sm">{exam.subject} • {questions.length} questions • {totalMarks} total marks</p>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate(`/exam-results/${examId}`)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
-            >
-              View Results
-            </button>
-            <button
-              onClick={handleExportQuestions}
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition"
-            >
-              Export
-            </button>
-            <button
-              onClick={() => setShowTemplates(true)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
-            >
-              Templates
-            </button>
-            <button
-              onClick={() => setShowQuestionBank(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
-            >
-              Question Bank
-            </button>
-            <button
-              onClick={() => setShowBulkImport(true)}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition"
-            >
-              Bulk Import
-            </button>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-            >
-              Add Question
-            </button>
-          </div>
+          <h3 className="text-lg font-semibold">Actions</h3>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500">
+            ✕
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => { setShowAddForm(true); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-blue-600 text-white rounded-lg text-sm font-medium"
+          >
+            Add Question
+          </button>
+          <button
+            onClick={() => { setShowQuestionBank(true); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-indigo-600 text-white rounded-lg text-sm font-medium"
+          >
+            Question Bank
+          </button>
+          <button
+            onClick={() => { setShowBulkImport(true); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-orange-600 text-white rounded-lg text-sm font-medium"
+          >
+            Bulk Import
+          </button>
+          <button
+            onClick={() => { setShowTemplates(true); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-purple-600 text-white rounded-lg text-sm font-medium"
+          >
+            Templates
+          </button>
+          <button
+            onClick={() => { handleExportQuestions(); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-teal-600 text-white rounded-lg text-sm font-medium"
+          >
+            Export
+          </button>
+          <button
+            onClick={() => { navigate(`/exam-results/${examId}`); setIsMobileMenuOpen(false); }}
+            className="p-3 bg-green-600 text-white rounded-lg text-sm font-medium"
+          >
+            View Results
+          </button>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-          {success}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {/* Exam Summary */}
-      {exam && questions.length > 0 && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-blue-800 mb-3">📊 Exam Summary</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{questions.length}</div>
-              <div className="text-blue-700">Total Questions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{totalMarks}</div>
-              <div className="text-green-700">Total Marks</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {questions.filter(q => q.difficulty === 'Easy').length}
-              </div>
-              <div className="text-purple-700">Easy Questions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {questions.filter(q => q.difficulty === 'Medium').length}
-              </div>
-              <div className="text-orange-700">Medium Questions</div>
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-blue-200">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {questions.filter(q => q.difficulty === 'Hard').length}
-                </div>
-                <div className="text-red-700">Hard Questions</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-indigo-600">
-                  {questions.filter(q => q.questionType === 'Multiple Choice').length}
-                </div>
-                <div className="text-indigo-700">Multiple Choice</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-teal-600">
-                  {questions.filter(q => q.questionType !== 'Multiple Choice').length}
-                </div>
-                <div className="text-teal-700">Other Types</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-600">
-                  {Math.round((totalMarks / questions.length) * 10) / 10}
-                </div>
-                <div className="text-gray-700">Avg Marks/Question</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Question Statistics */}
-      {questions.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Question Statistics</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{questionStats.totalQuestions}</div>
-              <div className="text-sm text-gray-600">Total Questions</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{questionStats.totalMarks}</div>
-              <div className="text-sm text-gray-600">Total Marks</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{questionStats.averageMarks}</div>
-              <div className="text-sm text-gray-600">Avg Marks</div>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">
-                {exam ? Math.round((questionStats.totalMarks / exam.totalMarks) * 100) : 0}%
-              </div>
-              <div className="text-sm text-gray-600">Marks Used</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
-              <h4 className="font-medium text-gray-800 mb-3">By Question Type</h4>
-              <div className="space-y-2">
-                {Object.entries(questionStats.byType).map(([type, count]) => (
-                  <div key={type} className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">{type}</span>
-                    <span className="text-sm font-medium text-gray-800">{count}</span>
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold text-blue-800">📝 Question Manager</h1>
+                {exam && (
+                  <div className="text-gray-600 text-sm">
+                    <p className="font-medium">{exam.title}</p>
+                    <p>{exam.subject} • {questions.length} questions • {totalMarks} marks</p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-800 mb-3">By Difficulty</h4>
-              <div className="space-y-2">
-                {Object.entries(questionStats.byDifficulty).map(([difficulty, count]) => (
-                  <div key={difficulty} className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">{difficulty}</span>
-                    <span className="text-sm font-medium text-gray-800">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Question Templates Modal */}
-      {showTemplates && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl w-full mx-4">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">📋 Question Templates</h3>
-            <div className="space-y-3 mb-6">
-              {questionTemplates.map((template, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
-                  <h4 className="font-medium text-gray-800 mb-2">{template.name}</h4>
-                  <p className="text-sm text-gray-600 mb-3">{template.template.questionText}</p>
-                  <button
-                    onClick={() => useTemplate(template.template)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
-                  >
-                    Use Template
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowTemplates(false)}
-              className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Import Modal */}
-      {showBulkImport && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl w-full mx-4">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">📥 Bulk Import Questions</h3>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
-                Format: question,type,options,correctAnswer,marks,difficulty
-              </p>
-              <p className="text-sm text-gray-500 mb-4">
-                Example: "What is 2+2?,Multiple Choice,2|3|4|5,4,1,Easy"
-              </p>
-              <textarea
-                value={bulkQuestions}
-                onChange={(e) => setBulkQuestions(e.target.value)}
-                rows={10}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter questions in CSV format..."
-              />
-            </div>
-            <div className="flex gap-3">
               <button
-                onClick={handleBulkImport}
-                disabled={importing}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 text-gray-600"
               >
-                {importing ? 'Importing...' : 'Import Questions'}
-              </button>
-              <button
-                onClick={() => setShowBulkImport(false)}
-                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Question Bank Modal */}
-      {showQuestionBank && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-800">📚 Add Questions from Question Bank</h3>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleAddFromQuestionBank}
-                  disabled={selectedQuestions.length === 0}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition"
-                >
-                  Add {selectedQuestions.length > 0 ? `(${selectedQuestions.length})` : ''} Questions
-                </button>
-                <button
-                  onClick={() => {
-                    setShowQuestionBank(false);
-                    setSelectedQuestions([]);
-                  }}
-                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-
-            <QuestionBank
-              onSelectQuestions={handleQuestionSelection}
-              selectedQuestions={selectedQuestions}
-              examSubject={exam?.subject}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Question Preview Modal */}
-      {showPreview && previewQuestion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-800">👁️ Question Preview</h3>
-              <button
-                onClick={() => {
-                  setShowPreview(false);
-                  setPreviewQuestion(null);
-                }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-              >
-                Close
+                ⚙️
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-800 mb-2">Question:</h4>
-                <p className="text-gray-700">{previewQuestion.questionText}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-600">Type:</span>
-                  <span className="ml-2 text-gray-800">{previewQuestion.questionType}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Marks:</span>
-                  <span className="ml-2 text-gray-800">{previewQuestion.marks}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Difficulty:</span>
-                  <span className="ml-2 text-gray-800">{previewQuestion.difficulty}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Subject:</span>
-                  <span className="ml-2 text-gray-800">{previewQuestion.subject}</span>
-                </div>
-              </div>
-
-              {previewQuestion.questionType === 'Multiple Choice' && previewQuestion.options && (
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Options:</h4>
-                  <div className="space-y-2">
-                    {previewQuestion.options.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className={`w-4 h-4 rounded-full border-2 ${option === previewQuestion.correctAnswer
-                          ? 'border-green-500 bg-green-500'
-                          : 'border-gray-300'
-                          }`}>
-                          {option === previewQuestion.correctAnswer && (
-                            <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
-                          )}
-                        </span>
-                        <span className={`${option === previewQuestion.correctAnswer ? 'font-medium text-green-700' : 'text-gray-600'}`}>
-                          {option}
-                          {option === previewQuestion.correctAnswer && (
-                            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              ✓ Correct Answer
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {previewQuestion.questionType !== 'Multiple Choice' && (
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Correct Answer:</h4>
-                  <p className="text-gray-700 bg-green-50 p-3 rounded-lg border border-green-200">
-                    {previewQuestion.correctAnswer}
-                  </p>
-                </div>
-              )}
-
-              {previewQuestion.explanation && (
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Explanation:</h4>
-                  <p className="text-gray-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                    {previewQuestion.explanation}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add/Edit Question Form */}
-      {showAddForm && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            {editingQuestion ? 'Edit Question' : 'Add New Question'}
-          </h3>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Question Text *
-              </label>
-              <textarea
-                name="questionText"
-                value={questionForm.questionText}
-                onChange={handleInputChange}
-                required
-                rows={3}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.questionText ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                placeholder="Enter your question here..."
-              />
-              {formErrors.questionText && (
-                <p className="text-red-500 text-sm mt-1">{formErrors.questionText}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Question Type
-                </label>
-                <select
-                  name="questionType"
-                  value={questionForm.questionType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Multiple Choice">Multiple Choice</option>
-                  <option value="True/False">True/False</option>
-                  <option value="Short Answer">Short Answer</option>
-                  <option value="Essay">Essay</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Marks *
-                </label>
-                <input
-                  type="number"
-                  name="marks"
-                  value={questionForm.marks}
-                  onChange={handleInputChange}
-                  required
-                  min="1"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.marks ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                />
-                {formErrors.marks && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.marks}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Difficulty
-                </label>
-                <select
-                  name="difficulty"
-                  value={questionForm.difficulty}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Options for Multiple Choice */}
-            {questionForm.questionType === 'Multiple Choice' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Options * (Click the radio button to mark correct answer)
-                </label>
-                <div className="space-y-3">
-                  {questionForm.options.map((option, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${questionForm.correctAnswer === option
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                    >
-                      <input
-                        type="radio"
-                        name="correctAnswer"
-                        value={option}
-                        checked={questionForm.correctAnswer === option}
-                        onChange={handleInputChange}
-                        className="text-green-600 focus:ring-green-500"
-                        id={`option-${index}`}
-                      />
-                      <label
-                        htmlFor={`option-${index}`}
-                        className="flex-1 cursor-pointer"
-                      >
-                        <input
-                          type="text"
-                          value={option}
-                          onChange={(e) => handleOptionChange(index, e.target.value)}
-                          placeholder={`Option ${index + 1}`}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </label>
-                      {questionForm.options.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOption(index)}
-                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition"
-                          title="Remove option"
-                        >
-                          ✕
-                        </button>
-                      )}
-                      {questionForm.correctAnswer === option && (
-                        <div className="flex items-center gap-1 text-green-600">
-                          <span className="text-sm font-medium">✓ Correct</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {questionForm.options.length < 6 && (
-                    <button
-                      type="button"
-                      onClick={addOption}
-                      className="w-full px-4 py-3 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg transition text-sm font-medium"
-                    >
-                      + Add Option
-                    </button>
-                  )}
-                </div>
-                {formErrors.options && (
-                  <p className="text-red-500 text-sm mt-2">{formErrors.options}</p>
-                )}
-                {formErrors.correctAnswer && (
-                  <p className="text-red-500 text-sm mt-2">{formErrors.correctAnswer}</p>
-                )}
-              </div>
-            )}
-
-            {/* Correct Answer for non-multiple choice */}
-            {questionForm.questionType !== 'Multiple Choice' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Correct Answer *
-                </label>
-                {questionForm.questionType === 'True/False' ? (
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="correctAnswer"
-                        value="True"
-                        checked={questionForm.correctAnswer === 'True'}
-                        onChange={handleInputChange}
-                        className="text-green-600 focus:ring-green-500"
-                      />
-                      <span className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                        True
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="correctAnswer"
-                        value="False"
-                        checked={questionForm.correctAnswer === 'False'}
-                        onChange={handleInputChange}
-                        className="text-green-600 focus:ring-green-500"
-                      />
-                      <span className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                        False
-                      </span>
-                    </label>
-                  </div>
-                ) : (
-                  <textarea
-                    name="correctAnswer"
-                    value={questionForm.correctAnswer}
-                    onChange={handleInputChange}
-                    required
-                    rows={questionForm.questionType === 'Essay' ? 4 : 2}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.correctAnswer ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder={
-                      questionForm.questionType === 'Essay'
-                        ? 'Enter the expected essay answer or key points...'
-                        : 'Enter the correct answer...'
-                    }
-                  />
-                )}
-                {formErrors.correctAnswer && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.correctAnswer}</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Explanation (Optional)
-              </label>
-              <textarea
-                name="explanation"
-                value={questionForm.explanation}
-                onChange={handleInputChange}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Explain why this is the correct answer..."
-              />
-            </div>
-
-            <div className="flex gap-3 pt-4">
+            {/* Desktop buttons */}
+            <div className="hidden md:flex flex-wrap gap-2">
               <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                onClick={() => navigate(`/exam-results/${examId}`)}
+                className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition"
               >
-                {editingQuestion ? 'Update Question' : 'Add Question'}
+                View Results
               </button>
               <button
-                type="button"
-                onClick={resetForm}
-                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                onClick={handleExportQuestions}
+                className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm transition"
               >
-                Cancel
+                Export
               </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Questions List */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-800">
-            Questions ({questions.length})
-          </h3>
-        </div>
-
-        {questions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📝</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No Questions Yet</h3>
-            <p className="text-gray-500 mb-6">Add questions to get started with your exam.</p>
-            <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setShowTemplates(true)}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
+                className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition"
               >
-                Use Templates
+                Templates
+              </button>
+              <button
+                onClick={() => setShowQuestionBank(true)}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"
+              >
+                Question Bank
               </button>
               <button
                 onClick={() => setShowBulkImport(true)}
-                className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition"
+                className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition"
               >
                 Bulk Import
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
               >
-                Add First Question
+                Add Question
               </button>
             </div>
           </div>
-        ) : (
-          <div className="divide-y divide-gray-200">
-            {questions.map((question, index) => (
-              <div key={question._id} className="p-6 hover:bg-gray-50">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-semibold text-gray-400">#{index + 1}</span>
+
+          {/* Tabs */}
+          <div className="mt-4 flex border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('questions')}
+              className={`px-4 py-2 text-sm font-medium ${activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Questions
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`px-4 py-2 text-sm font-medium ${activeTab === 'stats' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Statistics
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Success/Error Messages */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* Statistics Tab */}
+        {activeTab === 'stats' && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Exam Statistics</h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-xl md:text-2xl font-bold text-blue-600">{questionStats.totalQuestions}</div>
+                <div className="text-xs md:text-sm text-blue-700">Total Questions</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-xl md:text-2xl font-bold text-green-600">{questionStats.totalMarks}</div>
+                <div className="text-xs md:text-sm text-green-700">Total Marks</div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-xl md:text-2xl font-bold text-purple-600">{questionStats.averageMarks}</div>
+                <div className="text-xs md:text-sm text-purple-700">Avg Marks</div>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-xl md:text-2xl font-bold text-orange-600">
+                  {exam ? Math.round((questionStats.totalMarks / exam.totalMarks) * 100) : 0}%
+                </div>
+                <div className="text-xs md:text-sm text-orange-700">Marks Used</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-medium text-gray-800 mb-3">By Question Type</h4>
+                <div className="space-y-2">
+                  {Object.entries(questionStats.byType).map(([type, count]) => (
+                    <div key={type} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">{type}</span>
+                      <span className="text-sm font-medium text-gray-800">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800 mb-3">By Difficulty</h4>
+                <div className="space-y-2">
+                  {Object.entries(questionStats.byDifficulty).map(([difficulty, count]) => (
+                    <div key={difficulty} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">{difficulty}</span>
+                      <span className="text-sm font-medium text-gray-800">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Questions Tab */}
+        {activeTab === 'questions' && (
+          <>
+            {/* Add/Edit Question Form */}
+            {showAddForm && (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {editingQuestion ? 'Edit Question' : 'Add New Question'}
+                  </h3>
+                  <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Question Text *
+                    </label>
+                    <textarea
+                      name="questionText"
+                      value={questionForm.questionText}
+                      onChange={handleInputChange}
+                      required
+                      rows={3}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.questionText ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      placeholder="Enter your question here..."
+                    />
+                    {formErrors.questionText && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.questionText}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                     <div>
-                      <h4 className="text-lg font-medium text-gray-800 mb-2">
-                        {question.questionText}
-                      </h4>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${question.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                          question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                          {question.difficulty}
-                        </span>
-                        <span>{question.questionType}</span>
-                        <span className="font-medium">{question.marks} marks</span>
-                      </div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Question Type
+                      </label>
+                      <select
+                        name="questionType"
+                        value={questionForm.questionType}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="Multiple Choice">Multiple Choice</option>
+                        <option value="True/False">True/False</option>
+                        <option value="Short Answer">Short Answer</option>
+                        <option value="Essay">Essay</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Marks *
+                      </label>
+                      <input
+                        type="number"
+                        name="marks"
+                        value={questionForm.marks}
+                        onChange={handleInputChange}
+                        required
+                        min="1"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.marks ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                      />
+                      {formErrors.marks && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.marks}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Difficulty
+                      </label>
+                      <select
+                        name="difficulty"
+                        value={questionForm.difficulty}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {index > 0 && (
-                      <button
-                        onClick={() => moveQuestion(question._id, 'up')}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                    )}
-                    {index < questions.length - 1 && (
-                      <button
-                        onClick={() => moveQuestion(question._id, 'down')}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                    )}
+                  {/* Options for Multiple Choice */}
+                  {questionForm.questionType === 'Multiple Choice' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Options * (Click the radio button to mark correct answer)
+                      </label>
+                      <div className="space-y-3">
+                        {questionForm.options.map((option, index) => (
+                          <div
+                            key={index}
+                            className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${questionForm.correctAnswer === option
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                          >
+                            <input
+                              type="radio"
+                              name="correctAnswer"
+                              value={option}
+                              checked={questionForm.correctAnswer === option}
+                              onChange={handleInputChange}
+                              className="text-green-600 focus:ring-green-500"
+                              id={`option-${index}`}
+                            />
+                            <label
+                              htmlFor={`option-${index}`}
+                              className="flex-1 cursor-pointer"
+                            >
+                              <input
+                                type="text"
+                                value={option}
+                                onChange={(e) => handleOptionChange(index, e.target.value)}
+                                placeholder={`Option ${index + 1}`}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </label>
+                            {questionForm.options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removeOption(index)}
+                                className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition"
+                                title="Remove option"
+                              >
+                                ✕
+                              </button>
+                            )}
+                            {questionForm.correctAnswer === option && (
+                              <div className="hidden md:flex items-center gap-1 text-green-600">
+                                <span className="text-sm font-medium">✓ Correct</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {questionForm.options.length < 6 && (
+                          <button
+                            type="button"
+                            onClick={addOption}
+                            className="w-full px-4 py-3 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg transition text-sm font-medium"
+                          >
+                            + Add Option
+                          </button>
+                        )}
+                      </div>
+                      {formErrors.options && (
+                        <p className="text-red-500 text-sm mt-2">{formErrors.options}</p>
+                      )}
+                      {formErrors.correctAnswer && (
+                        <p className="text-red-500 text-sm mt-2">{formErrors.correctAnswer}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Correct Answer for non-multiple choice */}
+                  {questionForm.questionType !== 'Multiple Choice' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Correct Answer *
+                      </label>
+                      {questionForm.questionType === 'True/False' ? (
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="correctAnswer"
+                              value="True"
+                              checked={questionForm.correctAnswer === 'True'}
+                              onChange={handleInputChange}
+                              className="text-green-600 focus:ring-green-500"
+                            />
+                            <span className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                              True
+                            </span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="correctAnswer"
+                              value="False"
+                              checked={questionForm.correctAnswer === 'False'}
+                              onChange={handleInputChange}
+                              className="text-green-600 focus:ring-green-500"
+                            />
+                            <span className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                              False
+                            </span>
+                          </label>
+                        </div>
+                      ) : (
+                        <textarea
+                          name="correctAnswer"
+                          value={questionForm.correctAnswer}
+                          onChange={handleInputChange}
+                          required
+                          rows={questionForm.questionType === 'Essay' ? 4 : 2}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.correctAnswer ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          placeholder={
+                            questionForm.questionType === 'Essay'
+                              ? 'Enter the expected essay answer or key points...'
+                              : 'Enter the correct answer...'
+                          }
+                        />
+                      )}
+                      {formErrors.correctAnswer && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.correctAnswer}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Explanation (Optional)
+                    </label>
+                    <textarea
+                      name="explanation"
+                      value={questionForm.explanation}
+                      onChange={handleInputChange}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Explain why this is the correct answer..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
                     <button
-                      onClick={() => handleEdit(question)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm"
+                      type="submit"
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
                     >
-                      Edit
+                      {editingQuestion ? 'Update Question' : 'Add Question'}
                     </button>
                     <button
-                      onClick={() => handleDuplicate(question)}
-                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition text-sm"
-                      title="Duplicate question"
+                      type="button"
+                      onClick={resetForm}
+                      className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
                     >
-                      Duplicate
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Questions List */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="px-4 md:px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Questions ({questions.length})
+                </h3>
+                {questions.length > 0 && (
+                  <div className="text-sm text-gray-500">
+                    {totalMarks} total marks
+                  </div>
+                )}
+              </div>
+
+              {questions.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📝</div>
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Questions Yet</h3>
+                  <p className="text-gray-500 mb-6">Add questions to get started with your exam.</p>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <button
+                      onClick={() => setShowTemplates(true)}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm"
+                    >
+                      Use Templates
                     </button>
                     <button
-                      onClick={() => {
-                        setPreviewQuestion(question);
-                        setShowPreview(true);
-                      }}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
-                      title="Preview question"
+                      onClick={() => setShowBulkImport(true)}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition text-sm"
                     >
-                      Preview
+                      Bulk Import
                     </button>
                     <button
-                      onClick={() => handleDelete(question._id)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                      onClick={() => setShowAddForm(true)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm"
                     >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleRemoveFromExam(question._id)}
-                      className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition text-sm"
-                      title="Remove from exam (keeps question in bank)"
-                    >
-                      Remove
-                    </button>
-                    <button
-                      onClick={() => handleQuickEdit(question)}
-                      className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm"
-                      title="Quick edit correct answer"
-                    >
-                      ✏️
+                      Add First Question
                     </button>
                   </div>
                 </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {questions.map((question, index) => (
+                    <div key={question._id} className="p-4 md:p-6 hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-lg font-semibold text-gray-400 mt-1">#{index + 1}</span>
+                          <div className="flex-1">
+                            <h4 className="text-base md:text-lg font-medium text-gray-800 mb-2 line-clamp-2">
+                              {question.questionText}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${question.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
+                                question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                {question.difficulty}
+                              </span>
+                              <span>{question.questionType}</span>
+                              <span className="font-medium">{question.marks} marks</span>
+                            </div>
+                          </div>
+                        </div>
 
-                {/* Show options for multiple choice */}
-                {question.questionType === 'Multiple Choice' && question.options && (
-                  <div className="ml-8 space-y-1">
-                    {question.options.map((option, optIndex) => (
-                      <div key={optIndex} className="flex items-center gap-2">
-                        <span className={`w-4 h-4 rounded-full border-2 ${option === question.correctAnswer
-                          ? 'border-green-500 bg-green-500'
-                          : 'border-gray-300'
-                          }`}>
-                          {option === question.correctAnswer && (
-                            <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
-                          )}
-                        </span>
-                        <span className={`${option === question.correctAnswer ? 'font-medium text-green-700' : 'text-gray-600'}`}>
-                          {option}
-                          {option === question.correctAnswer && (
-                            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            onClick={() => handleEdit(question)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDuplicate(question)}
+                            className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition"
+                            title="Duplicate"
+                          >
+                            📋
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPreviewQuestion(question);
+                              setShowPreview(true);
+                            }}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                            title="Preview"
+                          >
+                            👁️
+                          </button>
+                          <button
+                            onClick={() => handleQuickEdit(question)}
+                            className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition"
+                            title="Quick Edit"
+                          >
+                            ✅
+                          </button>
+                          <button
+                            onClick={() => handleRemoveFromExam(question._id)}
+                            className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-lg transition"
+                            title="Remove from exam"
+                          >
+                            ➖
+                          </button>
+                          <button
+                            onClick={() => handleDelete(question._id)}
+                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Show options for multiple choice */}
+                      {question.questionType === 'Multiple Choice' && question.options && (
+                        <div className="ml-8 space-y-1">
+                          {question.options.map((option, optIndex) => (
+                            <div key={optIndex} className="flex items-center gap-2">
+                              <span className={`w-4 h-4 rounded-full border-2 ${option === question.correctAnswer
+                                ? 'border-green-500 bg-green-500'
+                                : 'border-gray-300'
+                                }`}>
+                                {option === question.correctAnswer && (
+                                  <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                                )}
+                              </span>
+                              <span className={`text-sm ${option === question.correctAnswer ? 'font-medium text-green-700' : 'text-gray-600'}`}>
+                                {option}
+                                {option === question.correctAnswer && (
+                                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                    ✓ Correct
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Show correct answer for other types */}
+                      {question.questionType !== 'Multiple Choice' && (
+                        <div className="ml-8">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">
+                              <span className="font-medium">Correct Answer:</span> {question.correctAnswer}
+                            </span>
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                               ✓ Correct
                             </span>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          </div>
+                        </div>
+                      )}
 
-                {/* Show correct answer for other types */}
-                {question.questionType !== 'Multiple Choice' && (
-                  <div className="ml-8">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">
-                        <span className="font-medium">Correct Answer:</span> {question.correctAnswer}
-                      </span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        ✓ Correct Answer
-                      </span>
+                      {question.explanation && (
+                        <div className="ml-8 mt-2">
+                          <p className="text-sm text-gray-500 italic">
+                            <span className="font-medium">Explanation:</span> {question.explanation}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Move buttons for desktop */}
+                      <div className="ml-8 mt-3 flex gap-2">
+                        {index > 0 && (
+                          <button
+                            onClick={() => moveQuestion(question._id, 'up')}
+                            className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                          >
+                            ↑ Move Up
+                          </button>
+                        )}
+                        {index < questions.length - 1 && (
+                          <button
+                            onClick={() => moveQuestion(question._id, 'down')}
+                            className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                          >
+                            ↓ Move Down
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Modals */}
+        {showTemplates && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">📋 Question Templates</h3>
+              <div className="space-y-3 mb-6">
+                {questionTemplates.map((template, index) => (
+                  <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                    <h4 className="font-medium text-gray-800 mb-2">{template.name}</h4>
+                    <p className="text-sm text-gray-600 mb-3">{template.template.questionText}</p>
+                    <button
+                      onClick={() => useTemplate(template.template)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+                    >
+                      Use Template
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="w-full px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showBulkImport && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">📥 Bulk Import Questions</h3>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Format: question,type,options,correctAnswer,marks,difficulty
+                </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Example: "What is 2+2?,Multiple Choice,2|3|4|5,4,1,Easy"
+                </p>
+                <textarea
+                  value={bulkQuestions}
+                  onChange={(e) => setBulkQuestions(e.target.value)}
+                  rows={10}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter questions in CSV format..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBulkImport}
+                  disabled={importing}
+                  className="flex-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition"
+                >
+                  {importing ? 'Importing...' : 'Import Questions'}
+                </button>
+                <button
+                  onClick={() => setShowBulkImport(false)}
+                  className="flex-1 px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showQuestionBank && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                <h3 className="text-xl font-semibold text-gray-800">📚 Add Questions from Question Bank</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddFromQuestionBank}
+                    disabled={selectedQuestions.length === 0}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition text-sm"
+                  >
+                    Add {selectedQuestions.length > 0 ? `(${selectedQuestions.length})` : ''}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowQuestionBank(false);
+                      setSelectedQuestions([]);
+                    }}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              <QuestionBank
+                onSelectQuestions={handleQuestionSelection}
+                selectedQuestions={selectedQuestions}
+                examSubject={exam?.subject}
+              />
+            </div>
+          </div>
+        )}
+
+        {showPreview && previewQuestion && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-800">👁️ Question Preview</h3>
+                <button
+                  onClick={() => {
+                    setShowPreview(false);
+                    setPreviewQuestion(null);
+                  }}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-2">Question:</h4>
+                  <p className="text-gray-700">{previewQuestion.questionText}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">Type:</span>
+                    <span className="ml-2 text-gray-800">{previewQuestion.questionType}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Marks:</span>
+                    <span className="ml-2 text-gray-800">{previewQuestion.marks}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Difficulty:</span>
+                    <span className="ml-2 text-gray-800">{previewQuestion.difficulty}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Subject:</span>
+                    <span className="ml-2 text-gray-800">{previewQuestion.subject}</span>
+                  </div>
+                </div>
+
+                {previewQuestion.questionType === 'Multiple Choice' && previewQuestion.options && (
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-2">Options:</h4>
+                    <div className="space-y-2">
+                      {previewQuestion.options.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className={`w-4 h-4 rounded-full border-2 ${option === previewQuestion.correctAnswer
+                            ? 'border-green-500 bg-green-500'
+                            : 'border-gray-300'
+                            }`}>
+                            {option === previewQuestion.correctAnswer && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </span>
+                          <span className={`${option === previewQuestion.correctAnswer ? 'font-medium text-green-700' : 'text-gray-600'}`}>
+                            {option}
+                            {option === previewQuestion.correctAnswer && (
+                              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                ✓ Correct Answer
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {question.explanation && (
-                  <div className="ml-8 mt-2">
-                    <p className="text-sm text-gray-500 italic">
-                      <span className="font-medium">Explanation:</span> {question.explanation}
+                {previewQuestion.questionType !== 'Multiple Choice' && (
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-2">Correct Answer:</h4>
+                    <p className="text-gray-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                      {previewQuestion.correctAnswer}
+                    </p>
+                  </div>
+                )}
+
+                {previewQuestion.explanation && (
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-2">Explanation:</h4>
+                    <p className="text-gray-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      {previewQuestion.explanation}
                     </p>
                   </div>
                 )}
               </div>
-            ))}
+            </div>
+          </div>
+        )}
+
+        {showQuickEdit && quickEditQuestion && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Edit Correct Answer</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Current Correct Answer: <span className="font-medium text-green-700">{quickEditQuestion.correctAnswer}</span>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Correct Answer *
+                </label>
+                <textarea
+                  value={quickEditAnswer}
+                  onChange={(e) => setQuickEditAnswer(e.target.value)}
+                  required
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter the new correct answer..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleQuickEditSubmit}
+                  className="flex-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                >
+                  Update Answer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowQuickEdit(false);
+                    setQuickEditQuestion(null);
+                    setQuickEditAnswer('');
+                  }}
+                  className="flex-1 px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Quick Edit Modal */}
-      {showQuickEdit && quickEditQuestion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Edit Correct Answer</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Current Correct Answer: <span className="font-medium text-green-700">{quickEditQuestion.correctAnswer}</span>
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Correct Answer *
-              </label>
-              <textarea
-                value={quickEditAnswer}
-                onChange={(e) => setQuickEditAnswer(e.target.value)}
-                required
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter the new correct answer..."
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleQuickEditSubmit}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-              >
-                Update Answer
-              </button>
-              <button
-                onClick={() => {
-                  setShowQuickEdit(false);
-                  setQuickEditQuestion(null);
-                  setQuickEditAnswer('');
-                }}
-                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Mobile Menu */}
+      <MobileMenu />
+      {isMobileMenuOpen && <MobileActionsMenu />}
     </div>
   );
 };

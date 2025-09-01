@@ -37,14 +37,20 @@ const ExamResults = () => {
     }
   }, [examId, user]);
 
-  const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : '');
-  const formatTime = (d) =>
-    d
-      ? new Date(d).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-      : '';
+  const formatDate = (d) => {
+    if (!d) return 'Not set';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+  };
+
+  const formatTime = (d) => {
+    if (!d) return 'Not set';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? 'Invalid Time' : date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   if (user?.role !== 'Teacher' && user?.role !== 'Admin') {
     return (

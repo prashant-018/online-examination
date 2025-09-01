@@ -242,11 +242,11 @@ const ManageExam = () => {
                     <div className="text-xs text-gray-500 mb-4">
                       <div className="flex items-center mb-1">
                         <FiCalendar className="mr-2" />
-                        Starts: {new Date(exam.startTime).toLocaleString()}
+                        Starts: {exam.startTime ? new Date(exam.startTime).toLocaleString() : 'Not set'}
                       </div>
                       <div className="flex items-center">
                         <FiCalendar className="mr-2" />
-                        Ends: {new Date(exam.endTime).toLocaleString()}
+                        Ends: {exam.endTime ? new Date(exam.endTime).toLocaleString() : 'Not set'}
                       </div>
                     </div>
 
