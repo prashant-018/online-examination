@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { HiOutlineBars3, HiX, HiChevronDown, HiChevronRight } from 'react-icons/hi';
-import { HiOutlineHome, HiOutlineCog, HiOutlineInformationCircle, HiOutlineDocumentText, HiOutlineUser, HiOutlineLogout } from 'react-icons/hi2';
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineInformationCircle, HiOutlineDocumentText, HiOutlineUser, HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 
 const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,13 +87,13 @@ const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
 
   const navLinks = [
     { name: 'Home', path: '/home', icon: HiOutlineHome },
-    { name: 'Services', path: '/services', icon: HiOutlineCog },
+    { name: 'Services', path: '/services', icon: HiOutlineCog6Tooth },
     { name: 'About Us', path: '/about', icon: HiOutlineInformationCircle },
   ];
 
   const examSubmenuItems = [
     { name: 'Add Exam', path: '/add-exam', icon: HiOutlineDocumentText },
-    { name: 'Manage Exams', path: '/manage-exams', icon: HiOutlineCog },
+    { name: 'Manage Exams', path: '/manage-exams', icon: HiOutlineCog6Tooth },
   ];
 
   return (
@@ -195,7 +195,7 @@ const Navbar = ({ user, isSidebarOpen, onToggleSidebar }) => {
                     }}
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
                   >
-                    <HiOutlineLogout className="w-5 h-5" />
+                    <HiOutlineArrowRightOnRectangle className="w-5 h-5" />
                     <span>Logout</span>
                   </button>
                 </>
