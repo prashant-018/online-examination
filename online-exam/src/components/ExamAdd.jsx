@@ -12,6 +12,7 @@ const ExamAdd = () => {
   const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingExam, setEditingExam] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -39,6 +40,15 @@ const ExamAdd = () => {
     'Chemistry',
     'Biology'
   ];
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (user?.role === 'Teacher') {
@@ -266,12 +276,12 @@ const ExamAdd = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Exam Management</h1>
-            <p className="text-gray-600 mt-2">Create and manage your exams</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Exam Management</h1>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">Create and manage your exams</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
@@ -280,7 +290,7 @@ const ExamAdd = () => {
             <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            Create New Exam
+            {isMobile ? 'New Exam' : 'Create New Exam'}
           </button>
         </div>
 
@@ -316,8 +326,8 @@ const ExamAdd = () => {
 
         {/* Exam Creation/Edit Form */}
         {showForm && (
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+            <div className="px-4 py-4 sm:px-6 border-b border-gray-200">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 {editingExam ? 'Edit Exam' : 'Create New Exam'}
               </h3>
@@ -325,9 +335,9 @@ const ExamAdd = () => {
                 {editingExam ? 'Update the exam details below' : 'Fill in the details to create a new exam'}
               </p>
             </div>
-            <div className="px-4 py-5 sm:p-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+            <div className="px-4 py-4 sm:p-6">
+              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
                   <div className="sm:col-span-6">
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">
                       Exam Title *
@@ -350,7 +360,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-6 md:sm:col-span-3">
                     <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
                       Subject *
                     </label>
@@ -376,7 +386,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-6 md:sm:col-span-3">
                     <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
                       Duration (minutes) *
                     </label>
@@ -399,7 +409,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-6 md:sm:col-span-2">
                     <label htmlFor="totalMarks" className="block text-sm font-medium text-gray-700">
                       Total Marks *
                     </label>
@@ -422,7 +432,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-6 md:sm:col-span-2">
                     <label htmlFor="passingMarks" className="block text-sm font-medium text-gray-700">
                       Passing Marks *
                     </label>
@@ -446,7 +456,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-6 md:sm:col-span-2">
                     <label htmlFor="maxAttempts" className="block text-sm font-medium text-gray-700">
                       Max Attempts
                     </label>
@@ -468,7 +478,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-6 md:sm:col-span-3">
                     <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
                       Start Time *
                     </label>
@@ -490,7 +500,7 @@ const ExamAdd = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-6 md:sm:col-span-3">
                     <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
                       End Time *
                     </label>
@@ -552,18 +562,18 @@ const ExamAdd = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3">
                   <button
                     type="button"
                     onClick={cancelForm}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
                     {loading ? (
                       <>
@@ -587,7 +597,7 @@ const ExamAdd = () => {
 
         {/* Exams List */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <div className="px-4 py-4 sm:px-6 border-b border-gray-200">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Your Exams</h3>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">A list of all exams you've created</p>
           </div>
@@ -628,7 +638,7 @@ const ExamAdd = () => {
                       <div className="px-4 py-4 sm:px-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <p className="text-sm font-medium text-indigo-600 truncate">{exam.title}</p>
+                            <p className="text-sm font-medium text-indigo-600 truncate max-w-[150px] sm:max-w-none">{exam.title}</p>
                             <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
                               {status.text}
                             </span>
@@ -655,14 +665,16 @@ const ExamAdd = () => {
                           </div>
                         </div>
                         <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
+                          <div className="sm:flex flex-col sm:flex-row">
+                            <p className="flex items-center text-sm text-gray-500 mb-1 sm:mb-0">
                               <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                               </svg>
-                              {formatDate(exam.startTime)} - {formatDate(exam.endTime)}
+                              <span className="truncate max-w-[200px] sm:max-w-none">
+                                {formatDate(exam.startTime)} - {formatDate(exam.endTime)}
+                              </span>
                             </p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                            <p className="mt-1 sm:mt-0 flex items-center text-sm text-gray-500 sm:ml-6">
                               <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
                               </svg>
@@ -678,11 +690,11 @@ const ExamAdd = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="mt-2 flex justify-between">
-                          <div>
-                            <p className="text-sm text-gray-500 truncate">{exam.description}</p>
+                        <div className="mt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                          <div className="mb-2 sm:mb-0">
+                            <p className="text-sm text-gray-500 line-clamp-1">{exam.description}</p>
                           </div>
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-2 self-end sm:self-auto">
                             <button
                               onClick={() => navigate(`/exam/${exam._id}/questions`)}
                               className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
