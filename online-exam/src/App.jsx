@@ -27,6 +27,7 @@ import ExamAdd from './components/ExamAdd';
 import Profile from './components/Profile';
 import Unauthorized from './components/Unauthorized';
 import ManageExam from './components/ManageExam';
+import CookieConsent from './components/CookieConsent';
 
 const AppContent = () => {
   const { isAuthenticated, user, loading } = useExamContext();
@@ -193,6 +194,9 @@ const AppContent = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
     </div>
   );
 };

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Consent Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto p-8">
+    <h1 class="text-2xl font-bold mb-4">Cookie Consent Test</h1>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-4">
+      <h2 class="text-lg font-semibold mb-2">Test localStorage functionality:</h2>
+      <button onclick="testSetConsent()" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">
+        Set Consent
+      </button>
+      <button onclick="testClearConsent()" class="bg-red-500 text-white px-4 py-2 rounded mr-2">
+        Clear Consent
+      </button>
+      <button onclick="testCheckConsent()" class="bg-green-500 text-white px-4 py-2 rounded">
+        Check Consent
+      </button>
+    </div>
+
+    <div id="result" class="bg-gray-200 p-4 rounded"></div>
+  </div>
+
+  <script>
+    function testSetConsent() {
+      localStorage.setItem('cookieConsent', 'accepted');
+      document.getElementById('result').innerHTML = '<p class="text-green-600">✓ Consent set in localStorage</p>';
+    }
+
+    function testClearConsent() {
+      localStorage.removeItem('cookieConsent');
+      document.getElementById('result').innerHTML = '<p class="text-red-600">✗ Consent cleared from localStorage</p>';
+    }
+
+    function testCheckConsent() {
+      const hasConsent = localStorage.getItem('cookieConsent');
+      if (hasConsent) {
+        document.getElementById('result').innerHTML = '<p class="text-green-600">✓ Consent found: ' + hasConsent + '</p>';
+      } else {
+        document.getElementById('result').innerHTML = '<p class="text-red-600">✗ No consent found</p>';
+      }
+    }
+
+    // Check initial state
+    window.onload = function () {
+      testCheckConsent();
+    }
+  </script>
+</body>
+
+</html>
